@@ -67,52 +67,70 @@ export const userApi = {
   },
 
   createUser: async (userData: CreateUserData) => {
-    const lowercaseData = {
-      user_name: userData.user_name.toLowerCase(),
-      user_email: userData.user_email.toLowerCase(),
-      user_type: userData.user_type.toLowerCase(),
-      user_phone: userData.user_phone.toLowerCase(),
-      password: userData.password.toLowerCase(),
-      user_role: userData.user_role.toLowerCase(),
-    };
-    const params = new URLSearchParams(lowercaseData as any);
-    const response = await api.post(`/user/user?${params.toString()}`);
-    return response.data;
+    try {
+      // Create the query parameters for the POST request
+      const params = new URLSearchParams();
+      params.append('user_name', userData.user_name);
+      params.append('user_email', userData.user_email);
+      params.append('user_type', userData.user_type);
+      params.append('user_phone', userData.user_phone);
+      params.append('password', userData.password);
+      params.append('user_role', userData.user_role);
+
+      console.log('Create User URL:', `/user/user?${params.toString()}`);
+
+      const response = await api.post(`/user/user?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      console.error('Create User API Error:', error);
+      throw error;
+    }
   },
 
   updateUser: async (phone: string, userData: Partial<CreateUserData>) => {
-    // Only include fields that have values and are different from empty
-    const updateData: Record<string, string> = {};
+    try {
+      // Only include fields that have values and are different from empty
+      const updateData: Record<string, string> = {};
 
-    if (userData.user_name && userData.user_name.trim() !== '') {
-      updateData.user_name = userData.user_name;
-    }
-    if (userData.user_email && userData.user_email.trim() !== '') {
-      updateData.user_email = userData.user_email;
-    }
-    if (userData.user_type && userData.user_type.trim() !== '') {
-      updateData.user_type = userData.user_type;
-    }
-    if (userData.user_role && userData.user_role.trim() !== '') {
-      updateData.user_role = userData.user_role;
-    }
-    if (userData.password && userData.password.trim() !== '') {
-      updateData.password = userData.password;
-    }
+      if (userData.user_name && userData.user_name.trim() !== '') {
+        updateData.user_name = userData.user_name;
+      }
+      if (userData.user_email && userData.user_email.trim() !== '') {
+        updateData.user_email = userData.user_email;
+      }
+      if (userData.user_type && userData.user_type.trim() !== '') {
+        updateData.user_type = userData.user_type;
+      }
+      if (userData.user_role && userData.user_role.trim() !== '') {
+        updateData.user_role = userData.user_role;
+      }
+      if (userData.password && userData.password.trim() !== '') {
+        updateData.password = userData.password;
+      }
 
-    console.log('Update Data:', updateData);
+      console.log('Update Data:', updateData);
 
-    // If no fields to update, return early
-    if (Object.keys(updateData).length === 0) {
-      throw new Error('No fields to update');
+      // If no fields to update, return early
+      if (Object.keys(updateData).length === 0) {
+        throw new Error('No fields to update');
+      }
+
+      const response = await api.patch(`/user/user?user_phone=${phone}`, updateData);
+      return response.data;
+    } catch (error) {
+      console.error('Update User API Error:', error);
+      throw error;
     }
-
-    const response = await api.patch(`/user/user?user_phone=${phone}`, updateData);
-    return response.data;
   },
 
   deleteUser: async (recordId: string) => {
-    const response = await api.delete(`/user/user?record_id=${recordId}`);
-    return response.data;
+    try {
+      console.log('Delete User URL:', `/user/user?record_id=${recordId}`);
+      const response = await api.delete(`/user/user?record_id=${recordId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Delete User API Error:', error);
+      throw error;
+    }
   },
 };

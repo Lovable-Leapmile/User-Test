@@ -18,10 +18,10 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
   const [formData, setFormData] = useState<CreateUserData>({
     user_name: '',
     user_email: '',
-    user_type: 'Read_only',
+    user_type: 'admin',
     user_phone: '',
     password: '',
-    user_role: 'Picking',
+    user_role: 'admin',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -33,9 +33,9 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
         ...prev,
         user_name: initialData.user_name || '',
         user_email: initialData.user_email || '',
-        user_type: initialData.user_type || 'Read_only',
+        user_type: initialData.user_type || 'admin',
         user_phone: initialData.user_phone || '',
-        user_role: initialData.user_role || 'Picking',
+        user_role: initialData.user_role || 'admin',
         password: '' // Don't pre-fill password in edit mode
       }));
     } else if (mode === 'create') {
@@ -43,10 +43,10 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
       setFormData({
         user_name: '',
         user_email: '',
-        user_type: 'Read_only',
+        user_type: 'admin',
         user_phone: '',
         password: '',
-        user_role: 'Picking',
+        user_role: 'admin',
       });
     }
   }, [initialData, mode, isOpen]);
@@ -110,10 +110,10 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
         setFormData({
           user_name: '',
           user_email: '',
-          user_type: 'Read_only',
+          user_type: 'admin',
           user_phone: '',
           password: '',
-          user_role: 'Picking',
+          user_role: 'admin',
         });
       }
       setErrors({});
@@ -182,9 +182,9 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
                 <SelectValue placeholder="Select user type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Admin">Admin</SelectItem>
-                <SelectItem value="Read_only">Read Only</SelectItem>
-                <SelectItem value="Read_write">Read Write</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="read_only">Read Only</SelectItem>
+                <SelectItem value="read_write">Read Write</SelectItem>
               </SelectContent>
             </Select>
             {mode === 'edit' && (
@@ -236,9 +236,9 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Picking">Picking</SelectItem>
-                <SelectItem value="in-bound">In-bound</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="picking">Picking</SelectItem>
+                <SelectItem value="in-bound">In-bound</SelectItem>
                 <SelectItem value="all-ops">All Ops</SelectItem>
               </SelectContent>
             </Select>

@@ -55,6 +55,7 @@ export default function Dashboard() {
 
   const handleCreateUser = async (userData: CreateUserData) => {
     try {
+      console.log('Creating user with data:', userData);
       await userApi.createUser(userData);
       toast({
         title: 'Success',
@@ -62,10 +63,12 @@ export default function Dashboard() {
       });
       setIsCreateModalOpen(false);
       fetchUsers();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Create user error:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to create user';
       toast({
         title: 'Error',
-        description: 'Failed to create user',
+        description: errorMessage,
         variant: 'destructive',
       });
       throw error;
@@ -98,6 +101,7 @@ export default function Dashboard() {
     if (!selectedUser) return;
 
     try {
+      console.log('Deleting user with record_id:', selectedUser.record_id);
       await userApi.deleteUser(selectedUser.record_id);
       toast({
         title: 'Success',
@@ -106,10 +110,12 @@ export default function Dashboard() {
       setIsDeleteDialogOpen(false);
       setSelectedUser(null);
       fetchUsers();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Delete user error:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to delete user';
       toast({
         title: 'Error',
-        description: 'Failed to delete user',
+        description: errorMessage,
         variant: 'destructive',
       });
     }

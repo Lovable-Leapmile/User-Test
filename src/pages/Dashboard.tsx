@@ -1,11 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { AgGridReact } from 'ag-grid-react';
-import { ColDef, ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
+import { ColDef } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
-
-// Register AG Grid modules
-ModuleRegistry.registerModules([AllCommunityModule]);
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { userApi, User, CreateUserData } from '@/lib/api';
@@ -35,7 +32,6 @@ export default function Dashboard() {
     setLoading(true);
     try {
       const usersData = await userApi.getUsers();
-      console.log('Fetched users:', usersData);
       setUsers(usersData || []);
     } catch (error) {
       console.error('Fetch error:', error);
@@ -56,7 +52,6 @@ export default function Dashboard() {
 
   const handleCreateUser = async (userData: CreateUserData) => {
     try {
-      console.log('Creating user with data:', userData);
       await userApi.createUser(userData);
       toast({
         title: 'Success',
@@ -65,7 +60,6 @@ export default function Dashboard() {
       setIsCreateModalOpen(false);
       fetchUsers();
     } catch (error: any) {
-      console.error('Create user error:', error);
       const errorMessage = error.response?.data?.message || 'Failed to create user';
       toast({
         title: 'Error',
@@ -103,7 +97,6 @@ export default function Dashboard() {
 
     setDeleteLoading(true);
     try {
-      console.log('Deleting user with phone:', selectedUser.user_phone);
       await userApi.deleteUser(selectedUser.user_phone);
       toast({
         title: 'Success',
@@ -113,7 +106,6 @@ export default function Dashboard() {
       setSelectedUser(null);
       fetchUsers();
     } catch (error: any) {
-      console.error('Delete user error:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Failed to delete user';
       toast({
         title: 'Error',
@@ -164,7 +156,7 @@ export default function Dashboard() {
     );
   };
 
-  const columnDefs: ColDef[] = useMemo(() => [
+  const columnDefs: ColDef[] = [
     {
       field: 'record_id',
       headerName: 'Record ID',
@@ -220,7 +212,7 @@ export default function Dashboard() {
       filter: false,
       pinned: 'right',
     },
-  ], []);
+  ];
 
   const filteredUsers = useMemo(() => {
     if (!searchText) return users;
@@ -303,7 +295,7 @@ export default function Dashboard() {
       <div className="container mx-auto p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-gradient">User Management</h1>
+            <h1 className="text-4xl font-bold">User Management</h1>
             <p className="text-muted-foreground mt-2">Manage and monitor all users in the system</p>
           </div>
         </div>
@@ -326,7 +318,6 @@ export default function Dashboard() {
           </div>
 
           {isMobile ? (
-            // Mobile Card View
             <div className="space-y-4">
               {loading && (
                 <div className="text-center p-8">
@@ -350,7 +341,6 @@ export default function Dashboard() {
               ))}
             </div>
           ) : (
-            // Desktop AG Grid View
             <div className="ag-theme-alpine" style={{ height: '600px', width: '100%' }}>
               {loading && (
                 <div className="flex items-center justify-center h-full">
@@ -383,9 +373,6 @@ export default function Dashboard() {
                   }}
                   pagination={true}
                   paginationPageSize={20}
-                  loading={loading}
-                  animateRows={true}
-                  domLayout='normal'
                   suppressNoRowsOverlay={true}
                 />
               )}

@@ -8,7 +8,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
 
 interface DeleteConfirmDialogProps {
   isOpen: boolean;
@@ -35,18 +34,10 @@ export function DeleteConfirmDialog({ isOpen, onClose, onConfirm, userName, isLo
             disabled={isLoading}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isLoading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Deleting...
-              </>
-            ) : (
-              'Delete'
-            )}
+            {isLoading ? 'Deleting...' : 'Delete'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
   );
-}
 }

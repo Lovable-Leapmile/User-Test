@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API_BASE_URL = 'https://testhostharan.leapmile.com';
-const AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2wiOiJhZG1pbiIsImV4cCI6MTc2OTU4MDgzMV0.WRkWCmuO634oFp6BslP5Zi9JmplLoBZWAibU4XQ48_w';
+const AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2wiOiJhZG1pbiIsImV4cCI6MTc2OTU4MDgzMX0.WRkWCmuO634oFp6BslP5Zi9JmplLoBZWAibU4XQ48_w';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -44,7 +44,6 @@ export const userApi = {
       const params = new URLSearchParams(filters);
       const response = await api.get(`/user/users${params.toString() ? `?${params.toString()}` : ''}`);
 
-      // Extract users from records property
       const data = response.data;
       if (data && data.records && Array.isArray(data.records)) {
         return data.records;
@@ -73,7 +72,6 @@ export const userApi = {
 
   createUser: async (userData: CreateUserData) => {
     try {
-      // Create the query parameters for the POST request
       const params = new URLSearchParams();
       params.append('user_name', userData.user_name);
       params.append('user_email', userData.user_email);
@@ -81,8 +79,6 @@ export const userApi = {
       params.append('user_phone', userData.user_phone);
       params.append('password', userData.password);
       params.append('user_role', userData.user_role);
-
-      console.log('Create User URL:', `/user/user?${params.toString()}`);
 
       const response = await api.post(`/user/user?${params.toString()}`);
       return response.data;
@@ -94,7 +90,6 @@ export const userApi = {
 
   updateUser: async (phone: string, userData: Partial<CreateUserData>) => {
     try {
-      // Only include fields that have values and are different from empty
       const updateData: Record<string, string> = {};
 
       if (userData.user_name && userData.user_name.trim() !== '') {
@@ -113,9 +108,6 @@ export const userApi = {
         updateData.password = userData.password;
       }
 
-      console.log('Update Data:', updateData);
-
-      // If no fields to update, return early
       if (Object.keys(updateData).length === 0) {
         throw new Error('No fields to update');
       }
@@ -130,8 +122,6 @@ export const userApi = {
 
   deleteUser: async (phone: string) => {
     try {
-      // First, get the user details to get the record_id
-      console.log('Fetching user details for phone:', phone);
       const users = await userApi.getUserByPhone(phone);
 
       if (users.length === 0) {
@@ -141,7 +131,6 @@ export const userApi = {
       const user = users[0];
       const recordId = user.record_id;
 
-      console.log('Deleting user with record_id:', recordId);
       const response = await api.delete(`/user/user?record_id=${recordId}`);
       return response.data;
     } catch (error) {

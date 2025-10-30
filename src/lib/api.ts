@@ -32,12 +32,28 @@ export interface CreateUserData {
 export const userApi = {
   // Get all users or filter by parameters
   getUsers: async (filters?: Record<string, string>) => {
-    const params = new URLSearchParams(filters);
-    const response = await api.get(`/user/users${params.toString() ? `?${params.toString()}` : ''}`);
-    console.log('Raw API response:', response);
-    console.log('Response data:', response.data);
-    console.log('Response status:', response.status);
-    return response.data;
+    try {
+      const params = new URLSearchParams(filters);
+      const response = await api.get(`/user/users${params.toString() ? `?${params.toString()}` : ''}`);
+      console.log('Raw API response:', response);
+      console.log('Response data:', response.data);
+      console.log('Response status:', response.status);
+
+      // Handle different response structures
+      let usersData = response.data;
+
+      // If response is an object with nested data, extract it
+      if (usersData && typeof usersData === 'object' && !Array.isArray(usersData)) {
+        // Try common nested data structures
+        usersData = usersData.data || usersData.users || usersData.results || usersData.items || [];
+      }
+
+      // Ensure we return an array
+      return Array.isArray(usersData) ? usersData : [];
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error;
+    }
   },
 
   // Get user by phone

@@ -13,7 +13,6 @@ const api = axios.create({
 
 export interface User {
   id: number;
-  record_id?: string;
   user_name: string;
   user_phone: string;
   user_email: string;
@@ -39,50 +38,34 @@ export interface CreateUserData {
 }
 
 export const userApi = {
-  // Get all users or filter by parameters
-  getUsers: async (filters?: Record<string, string>) => {
+  getUsers: async (filters?: Record<string, string>): Promise<User[]> => {
     try {
       const params = new URLSearchParams(filters);
       const response = await api.get(`/user/users${params.toString() ? `?${params.toString()}` : ''}`);
-      console.log('Raw API response:', response);
-      console.log('Response data:', response.data);
-      console.log('Response status:', response.status);
 
-      // Extract users from the records property
-      const responseData = response.data;
-      let usersData = [];
-
-      if (responseData && responseData.records && Array.isArray(responseData.records)) {
-        usersData = responseData.records;
-      } else if (Array.isArray(responseData)) {
-        usersData = responseData;
+      // Extract users from records property
+      const data = response.data;
+      if (data && data.records && Array.isArray(data.records)) {
+        return data.records;
       }
-
-      console.log('Extracted users:', usersData);
-      console.log('Users count:', usersData.length);
-
-      // Ensure we return an array
-      return Array.isArray(usersData) ? usersData : [];
+      return [];
     } catch (error) {
       console.error('API Error:', error);
       throw error;
     }
   },
 
-  // Get user by phone
-  getUserByPhone: async (phone: string) => {
+  getUserByPhone: async (phone: string): Promise<User[]> => {
     const response = await api.get(`/user/users?user_phone=${phone}`);
-    const responseData = response.data;
+    const data = response.data;
 
-    if (responseData && responseData.records && Array.isArray(responseData.records)) {
-      return responseData.records;
+    if (data && data.records && Array.isArray(data.records)) {
+      return data.records;
     }
-    return responseData;
+    return [];
   },
 
-  // Create new user
   createUser: async (userData: CreateUserData) => {
-    // Convert all values to lowercase
     const lowercaseData = {
       user_name: userData.user_name.toLowerCase(),
       user_email: userData.user_email.toLowerCase(),
@@ -96,14 +79,12 @@ export const userApi = {
     return response.data;
   },
 
-  // Update user
   updateUser: async (phone: string, userData: Partial<CreateUserData>) => {
     const params = new URLSearchParams({ user_phone: phone, ...userData } as any);
     const response = await api.patch(`/user/user?${params.toString()}`);
     return response.data;
   },
 
-  // Delete user
   deleteUser: async (phone: string) => {
     const response = await api.delete(`/user/user?user_phone=${phone}`);
     return response.data;

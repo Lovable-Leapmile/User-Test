@@ -35,7 +35,7 @@ export default function Dashboard() {
     try {
       const usersData = await userApi.getUsers();
       console.log('Fetched users:', usersData);
-      setUsers(usersData);
+      setUsers(usersData || []);
     } catch (error) {
       console.error('Fetch error:', error);
       toast({
@@ -234,7 +234,7 @@ export default function Dashboard() {
             {user.user_role}
           </Badge>
         </div>
-      </CardContent>
+      </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Phone:</span>

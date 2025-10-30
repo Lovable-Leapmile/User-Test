@@ -45,7 +45,16 @@ export const userApi = {
 
   // Create new user
   createUser: async (userData: CreateUserData) => {
-    const params = new URLSearchParams(userData as any);
+    // Convert all values to lowercase
+    const lowercaseData = {
+      user_name: userData.user_name.toLowerCase(),
+      user_email: userData.user_email.toLowerCase(),
+      user_type: userData.user_type.toLowerCase(),
+      user_phone: userData.user_phone.toLowerCase(),
+      password: userData.password.toLowerCase(),
+      user_role: userData.user_role.toLowerCase(),
+    };
+    const params = new URLSearchParams(lowercaseData as any);
     const response = await api.post(`/user/user?${params.toString()}`);
     return response.data;
   },

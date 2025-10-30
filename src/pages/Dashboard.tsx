@@ -26,6 +26,7 @@ export default function Dashboard() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -100,9 +101,10 @@ export default function Dashboard() {
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
 
+    setDeleteLoading(true);
     try {
-      console.log('Deleting user with record_id:', selectedUser.record_id);
-      await userApi.deleteUser(selectedUser.record_id);
+      console.log('Deleting user with phone:', selectedUser.user_phone);
+      await userApi.deleteUser(selectedUser.user_phone);
       toast({
         title: 'Success',
         description: 'User deleted successfully',
@@ -112,12 +114,14 @@ export default function Dashboard() {
       fetchUsers();
     } catch (error: any) {
       console.error('Delete user error:', error);
-      const errorMessage = error.response?.data?.message || 'Failed to delete user';
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to delete user';
       toast({
         title: 'Error',
         description: errorMessage,
         variant: 'destructive',
       });
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -416,6 +420,7 @@ export default function Dashboard() {
         }}
         onConfirm={handleDeleteUser}
         userName={selectedUser?.user_name || ''}
+        isLoading={deleteLoading}
       />
     </div>
   );

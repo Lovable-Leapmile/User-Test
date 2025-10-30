@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API_BASE_URL = 'https://testhostharan.leapmile.com';
-const AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2wiOiJhZG1pbiIsImV4cCI6MTc2OTU4MDgzMX0.WRkWCmuO634oFp6BslP5Zi9JmplLoBZWAibU4XQ48_w';
+const AUTH_TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2wiOiJhZG1pbiIsImV4cCI6MTc2OTU4MDgzMV0.WRkWCmuO634oFp6BslP5Zi9JmplLoBZWAibU4XQ48_w';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -57,13 +57,18 @@ export const userApi = {
   },
 
   getUserByPhone: async (phone: string): Promise<User[]> => {
-    const response = await api.get(`/user/users?user_phone=${phone}`);
-    const data = response.data;
+    try {
+      const response = await api.get(`/user/users?user_phone=${phone}`);
+      const data = response.data;
 
-    if (data && data.records && Array.isArray(data.records)) {
-      return data.records;
+      if (data && data.records && Array.isArray(data.records)) {
+        return data.records;
+      }
+      return [];
+    } catch (error) {
+      console.error('Get User by Phone API Error:', error);
+      throw error;
     }
-    return [];
   },
 
   createUser: async (userData: CreateUserData) => {
@@ -123,9 +128,20 @@ export const userApi = {
     }
   },
 
-  deleteUser: async (recordId: string) => {
+  deleteUser: async (phone: string) => {
     try {
-      console.log('Delete User URL:', `/user/user?record_id=${recordId}`);
+      // First, get the user details to get the record_id
+      console.log('Fetching user details for phone:', phone);
+      const users = await userApi.getUserByPhone(phone);
+
+      if (users.length === 0) {
+        throw new Error('User not found');
+      }
+
+      const user = users[0];
+      const recordId = user.record_id;
+
+      console.log('Deleting user with record_id:', recordId);
       const response = await api.delete(`/user/user?record_id=${recordId}`);
       return response.data;
     } catch (error) {

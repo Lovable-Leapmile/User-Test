@@ -30,8 +30,23 @@ export default function Dashboard() {
     setLoading(true);
     try {
       const data = await userApi.getUsers();
-      setUsers(Array.isArray(data) ? data : []);
+      console.log('API Response:', data);
+      console.log('Is Array:', Array.isArray(data));
+      
+      // Handle different response structures
+      let usersData = [];
+      if (Array.isArray(data)) {
+        usersData = data;
+      } else if (data && typeof data === 'object') {
+        // Check if data is wrapped in a property
+        usersData = data.users || data.data || data.results || [];
+      }
+      
+      console.log('Processed users:', usersData);
+      console.log('Users count:', usersData.length);
+      setUsers(usersData);
     } catch (error) {
+      console.error('Fetch error:', error);
       toast({
         title: 'Error',
         description: 'Failed to fetch users',
@@ -145,16 +160,18 @@ export default function Dashboard() {
   };
 
   const columnDefs: ColDef[] = useMemo(() => [
-    { field: 'record_id', headerName: 'ID', filter: 'agTextColumnFilter', width: 120 },
-    { field: 'user_name', headerName: 'Name', filter: 'agTextColumnFilter', flex: 1 },
-    { field: 'user_email', headerName: 'Email', filter: 'agTextColumnFilter', flex: 1 },
-    { field: 'user_phone', headerName: 'Phone', filter: 'agTextColumnFilter', width: 150 },
-    { field: 'user_type', headerName: 'Type', filter: 'agSetColumnFilter', width: 130 },
-    { field: 'user_role', headerName: 'Role', filter: 'agSetColumnFilter', width: 130 },
+    { field: 'record_id', headerName: 'ID', filter: 'agTextColumnFilter', flex: 1, minWidth: 100 },
+    { field: 'user_name', headerName: 'Name', filter: 'agTextColumnFilter', flex: 1, minWidth: 150 },
+    { field: 'user_email', headerName: 'Email', filter: 'agTextColumnFilter', flex: 1, minWidth: 200 },
+    { field: 'user_phone', headerName: 'Phone', filter: 'agTextColumnFilter', flex: 1, minWidth: 150 },
+    { field: 'user_type', headerName: 'Type', filter: 'agSetColumnFilter', flex: 1, minWidth: 130 },
+    { field: 'user_role', headerName: 'Role', filter: 'agSetColumnFilter', flex: 1, minWidth: 130 },
     {
       headerName: 'Actions',
       cellRenderer: ActionsCellRenderer,
-      width: 150,
+      flex: 1,
+      minWidth: 150,
+      maxWidth: 200,
       sortable: false,
       filter: false,
       pinned: 'right',

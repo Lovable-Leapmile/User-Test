@@ -13,6 +13,7 @@ const api = axios.create({
 
 export interface User {
   id: number;
+  record_id: string;
   user_name: string;
   user_phone: string;
   user_email: string;
@@ -80,35 +81,38 @@ export const userApi = {
   },
 
   updateUser: async (phone: string, userData: Partial<CreateUserData>) => {
-    // Filter out empty values and only include changed fields
+    // Only include fields that have values and are different from empty
     const updateData: Record<string, string> = {};
 
     if (userData.user_name && userData.user_name.trim() !== '') {
-      updateData.user_name = userData.user_name.toLowerCase();
+      updateData.user_name = userData.user_name;
     }
     if (userData.user_email && userData.user_email.trim() !== '') {
-      updateData.user_email = userData.user_email.toLowerCase();
+      updateData.user_email = userData.user_email;
     }
     if (userData.user_type && userData.user_type.trim() !== '') {
-      updateData.user_type = userData.user_type.toLowerCase();
+      updateData.user_type = userData.user_type;
     }
     if (userData.user_role && userData.user_role.trim() !== '') {
-      updateData.user_role = userData.user_role.toLowerCase();
+      updateData.user_role = userData.user_role;
     }
-
-    // Only include password if it's provided and not empty
     if (userData.password && userData.password.trim() !== '') {
-      updateData.password = userData.password.toLowerCase();
+      updateData.password = userData.password;
     }
 
-    const params = new URLSearchParams({ user_phone: phone, ...updateData } as any);
-    console.log('Update API URL:', `/user/user?${params.toString()}`);
-    const response = await api.patch(`/user/user?${params.toString()}`);
+    console.log('Update Data:', updateData);
+
+    // If no fields to update, return early
+    if (Object.keys(updateData).length === 0) {
+      throw new Error('No fields to update');
+    }
+
+    const response = await api.patch(`/user/user?user_phone=${phone}`, updateData);
     return response.data;
   },
 
-  deleteUser: async (phone: string) => {
-    const response = await api.delete(`/user/user?user_phone=${phone}`);
+  deleteUser: async (recordId: string) => {
+    const response = await api.delete(`/user/user?record_id=${recordId}`);
     return response.data;
   },
 };

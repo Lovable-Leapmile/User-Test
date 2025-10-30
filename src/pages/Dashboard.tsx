@@ -98,7 +98,7 @@ export default function Dashboard() {
     if (!selectedUser) return;
 
     try {
-      await userApi.deleteUser(selectedUser.user_phone);
+      await userApi.deleteUser(selectedUser.record_id);
       toast({
         title: 'Success',
         description: 'User deleted successfully',
@@ -156,12 +156,12 @@ export default function Dashboard() {
 
   const columnDefs: ColDef[] = useMemo(() => [
     {
-      field: 'id',
-      headerName: 'ID',
+      field: 'record_id',
+      headerName: 'Record ID',
       filter: 'agTextColumnFilter',
       flex: 1,
-      minWidth: 80,
-      maxWidth: 100
+      minWidth: 120,
+      maxWidth: 150
     },
     {
       field: 'user_name',
@@ -222,7 +222,7 @@ export default function Dashboard() {
       user.user_phone?.toLowerCase().includes(searchLower) ||
       user.user_type?.toLowerCase().includes(searchLower) ||
       user.user_role?.toLowerCase().includes(searchLower) ||
-      user.id?.toString().includes(searchLower)
+      user.record_id?.toString().includes(searchLower)
     );
   }, [users, searchText]);
 
@@ -249,8 +249,8 @@ export default function Dashboard() {
           <span className="font-medium capitalize">{user.user_type}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">ID:</span>
-          <span className="font-medium font-mono text-xs">{user.id}</span>
+          <span className="text-muted-foreground">Record ID:</span>
+          <span className="font-medium font-mono text-xs">{user.record_id}</span>
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <Button
@@ -336,7 +336,7 @@ export default function Dashboard() {
               )}
 
               {!loading && filteredUsers.map((user) => (
-                <UserCard key={user.id} user={user} />
+                <UserCard key={user.record_id} user={user} />
               ))}
             </div>
           ) : (

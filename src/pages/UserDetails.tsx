@@ -66,6 +66,7 @@ export default function UserDetails() {
       } else if (updatedData && typeof updatedData === 'object') {
         setUser(updatedData);
       }
+      setIsEditModalOpen(false);
     } catch (error) {
       toast({
         title: 'Error',
@@ -146,7 +147,7 @@ export default function UserDetails() {
             <div className="flex justify-between items-start">
               <div>
                 <CardTitle className="text-3xl text-gradient">{user.user_name}</CardTitle>
-                <CardDescription>User ID: {user.id}</CardDescription>
+                <CardDescription>Record ID: {user.record_id}</CardDescription>
               </div>
               <div className="flex gap-2">
                 <Badge variant="secondary" className="capitalize">
@@ -198,8 +199,8 @@ export default function UserDetails() {
                 <div className="flex items-start gap-3 p-4 rounded-lg bg-secondary/50">
                   <Shield className="h-5 w-5 mt-0.5 text-primary" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-muted-foreground">User ID</p>
-                    <p className="text-base font-semibold font-mono">{user.id}</p>
+                    <p className="text-sm font-medium text-muted-foreground">Record ID</p>
+                    <p className="text-base font-semibold font-mono">{user.record_id}</p>
                   </div>
                 </div>
 

@@ -54,22 +54,26 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.user_name.trim()) newErrors.user_name = 'Name is required';
-    if (!formData.user_email.trim()) newErrors.user_email = 'Email is required';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.user_email)) newErrors.user_email = 'Invalid email format';
-    if (!formData.user_phone.trim()) newErrors.user_phone = 'Phone number is required';
-
     if (mode === 'create') {
+      if (!formData.user_name.trim()) newErrors.user_name = 'Name is required';
+      if (!formData.user_email.trim()) newErrors.user_email = 'Email is required';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.user_email)) newErrors.user_email = 'Invalid email format';
+      if (!formData.user_phone.trim()) newErrors.user_phone = 'Phone number is required';
       if (!formData.password) newErrors.password = 'Password is required';
       if (formData.password && (formData.password.length < 6 || formData.password.length > 10)) {
         newErrors.password = 'Password must be 6-10 characters';
       }
     }
 
-    // For edit mode, password is optional but if provided, must be 6-10 characters
-    if (mode === 'edit' && formData.password && formData.password.trim() !== '' &&
-        (formData.password.length < 6 || formData.password.length > 10)) {
-      newErrors.password = 'Password must be 6-10 characters';
+    // For edit mode, only validate if fields are provided
+    if (mode === 'edit') {
+      if (formData.user_email && formData.user_email.trim() !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.user_email)) {
+        newErrors.user_email = 'Invalid email format';
+      }
+      if (formData.password && formData.password.trim() !== '' &&
+          (formData.password.length < 6 || formData.password.length > 10)) {
+        newErrors.password = 'Password must be 6-10 characters';
+      }
     }
 
     setErrors(newErrors);
@@ -83,17 +87,17 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
 
     setIsLoading(true);
     try {
-      // For edit mode, only send the data that's actually being changed
+      // For edit mode, create a clean object with only provided fields
       let submitData: CreateUserData;
 
       if (mode === 'edit') {
         submitData = {
-          user_name: formData.user_name,
-          user_email: formData.user_email,
-          user_type: formData.user_type,
-          user_phone: formData.user_phone,
-          user_role: formData.user_role,
-          password: formData.password || '', // Empty password won't be sent due to API filtering
+          user_name: formData.user_name || '',
+          user_email: formData.user_email || '',
+          user_type: formData.user_type || '',
+          user_phone: formData.user_phone || '',
+          user_role: formData.user_role || '',
+          password: formData.password || '',
         };
       } else {
         submitData = formData;
@@ -131,13 +135,15 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
         <DialogHeader>
           <DialogTitle>{mode === 'create' ? 'Create New User' : 'Edit User'}</DialogTitle>
           <DialogDescription>
-            {mode === 'create' ? 'Add a new user to the system.' : 'Update user information.'}
+            {mode === 'create' ? 'Add a new user to the system.' : 'Update user information. Only fill fields you want to change.'}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="user_name">Name *</Label>
+            <Label htmlFor="user_name">
+              Name {mode === 'create' && '*'}
+            </Label>
             <Input
               id="user_name"
               value={formData.user_name}
@@ -145,10 +151,15 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
               placeholder="Enter name"
             />
             {errors.user_name && <p className="text-sm text-destructive">{errors.user_name}</p>}
+            {mode === 'edit' && (
+              <p className="text-xs text-muted-foreground">Leave as is if you don't want to change</p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="user_email">Email *</Label>
+            <Label htmlFor="user_email">
+              Email {mode === 'create' && '*'}
+            </Label>
             <Input
               id="user_email"
               type="email"
@@ -157,10 +168,15 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
               placeholder="Enter email"
             />
             {errors.user_email && <p className="text-sm text-destructive">{errors.user_email}</p>}
+            {mode === 'edit' && (
+              <p className="text-xs text-muted-foreground">Leave as is if you don't want to change</p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="user_type">User Type *</Label>
+            <Label htmlFor="user_type">
+              User Type {mode === 'create' && '*'}
+            </Label>
             <Select value={formData.user_type} onValueChange={(value) => setFormData({ ...formData, user_type: value })}>
               <SelectTrigger>
                 <SelectValue placeholder="Select user type" />
@@ -171,10 +187,15 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
                 <SelectItem value="Read_write">Read Write</SelectItem>
               </SelectContent>
             </Select>
+            {mode === 'edit' && (
+              <p className="text-xs text-muted-foreground">Leave as is if you don't want to change</p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="user_phone">Phone Number *</Label>
+            <Label htmlFor="user_phone">
+              Phone Number {mode === 'create' && '*'}
+            </Label>
             <Input
               id="user_phone"
               type="tel"
@@ -191,7 +212,7 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
 
           <div className="space-y-2">
             <Label htmlFor="password">
-              Password {mode === 'create' ? '*' : ''}
+              Password {mode === 'create' && '*'}
             </Label>
             <Input
               id="password"
@@ -207,7 +228,9 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="user_role">Role *</Label>
+            <Label htmlFor="user_role">
+              Role {mode === 'create' && '*'}
+            </Label>
             <Select value={formData.user_role} onValueChange={(value) => setFormData({ ...formData, user_role: value })}>
               <SelectTrigger>
                 <SelectValue placeholder="Select role" />
@@ -219,6 +242,9 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
                 <SelectItem value="all-ops">All Ops</SelectItem>
               </SelectContent>
             </Select>
+            {mode === 'edit' && (
+              <p className="text-xs text-muted-foreground">Leave as is if you don't want to change</p>
+            )}
           </div>
 
           <DialogFooter>

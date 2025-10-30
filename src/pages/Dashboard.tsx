@@ -220,6 +220,10 @@ export default function Dashboard() {
           </div>
 
           <div className="ag-theme-alpine" style={{ height: '600px', width: '100%' }}>
+            {loading && <div className="text-center p-4">Loading users...</div>}
+            {!loading && filteredUsers.length === 0 && (
+              <div className="text-center p-4">No users found. Total users in state: {users.length}</div>
+            )}
             <AgGridReact
               rowData={filteredUsers}
               columnDefs={columnDefs}
@@ -232,6 +236,7 @@ export default function Dashboard() {
               paginationPageSize={20}
               loading={loading}
               animateRows={true}
+              domLayout='normal'
             />
           </div>
         </div>

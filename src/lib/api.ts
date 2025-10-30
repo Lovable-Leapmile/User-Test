@@ -34,6 +34,9 @@ export const userApi = {
   getUsers: async (filters?: Record<string, string>) => {
     const params = new URLSearchParams(filters);
     const response = await api.get(`/user/users${params.toString() ? `?${params.toString()}` : ''}`);
+    console.log('Raw API response:', response);
+    console.log('Response data:', response.data);
+    console.log('Response status:', response.status);
     return response.data;
   },
 

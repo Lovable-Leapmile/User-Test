@@ -80,7 +80,29 @@ export const userApi = {
   },
 
   updateUser: async (phone: string, userData: Partial<CreateUserData>) => {
-    const params = new URLSearchParams({ user_phone: phone, ...userData } as any);
+    // Filter out empty values and only include changed fields
+    const updateData: Record<string, string> = {};
+
+    if (userData.user_name && userData.user_name.trim() !== '') {
+      updateData.user_name = userData.user_name.toLowerCase();
+    }
+    if (userData.user_email && userData.user_email.trim() !== '') {
+      updateData.user_email = userData.user_email.toLowerCase();
+    }
+    if (userData.user_type && userData.user_type.trim() !== '') {
+      updateData.user_type = userData.user_type.toLowerCase();
+    }
+    if (userData.user_role && userData.user_role.trim() !== '') {
+      updateData.user_role = userData.user_role.toLowerCase();
+    }
+
+    // Only include password if it's provided and not empty
+    if (userData.password && userData.password.trim() !== '') {
+      updateData.password = userData.password.toLowerCase();
+    }
+
+    const params = new URLSearchParams({ user_phone: phone, ...updateData } as any);
+    console.log('Update API URL:', `/user/user?${params.toString()}`);
     const response = await api.patch(`/user/user?${params.toString()}`);
     return response.data;
   },

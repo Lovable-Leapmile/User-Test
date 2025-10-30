@@ -60,6 +60,7 @@ export default function Dashboard() {
         title: 'Success',
         description: 'User created successfully',
       });
+      setIsCreateModalOpen(false);
       fetchUsers();
     } catch (error) {
       toast({
@@ -80,6 +81,8 @@ export default function Dashboard() {
         title: 'Success',
         description: 'User updated successfully',
       });
+      setIsEditModalOpen(false);
+      setSelectedUser(null);
       fetchUsers();
     } catch (error) {
       toast({
@@ -101,6 +104,7 @@ export default function Dashboard() {
         description: 'User deleted successfully',
       });
       setIsDeleteDialogOpen(false);
+      setSelectedUser(null);
       fetchUsers();
     } catch (error) {
       toast({

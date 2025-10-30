@@ -27,39 +27,19 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (initialData) {
-      setFormData(prev => ({ ...prev, ...initialData }));
-    }
-  }, [initialData]);
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.user_name.trim()) newErrors.user_name = 'Name is required';
-    if (!formData.user_email.trim()) newErrors.user_email = 'Email is required';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.user_email)) newErrors.user_email = 'Invalid email format';
-    if (!formData.user_phone.trim()) newErrors.user_phone = 'Phone number is required';
-    
-    if (mode === 'create') {
-      if (!formData.password) newErrors.password = 'Password is required';
-      if (formData.password && (formData.password.length < 6 || formData.password.length > 10)) {
-        newErrors.password = 'Password must be 6-10 characters';
-      }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
-
-    setIsLoading(true);
-    try {
-      await onSubmit(formData);
-      onClose();
+    if (initialData && mode === 'edit') {
+      // For edit mode, only set the fields we want to allow editing
+      setFormData(prev => ({
+        ...prev,
+        user_name: initialData.user_name || '',
+        user_email: initialData.user_email || '',
+        user_type: initialData.user_type || 'Read_only',
+        user_phone: initialData.user_phone || '',
+        user_role: initialData.user_role || 'Picking',
+        password: '' // Don't pre-fill password in edit mode
+      }));
+    } else if (mode === 'create') {
+      // Reset form for create mode
       setFormData({
         user_name: '',
         user_email: '',
@@ -68,6 +48,70 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
         password: '',
         user_role: 'Picking',
       });
+    }
+  }, [initialData, mode, isOpen]);
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.user_name.trim()) newErrors.user_name = 'Name is required';
+    if (!formData.user_email.trim()) newErrors.user_email = 'Email is required';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.user_email)) newErrors.user_email = 'Invalid email format';
+    if (!formData.user_phone.trim()) newErrors.user_phone = 'Phone number is required';
+
+    if (mode === 'create') {
+      if (!formData.password) newErrors.password = 'Password is required';
+      if (formData.password && (formData.password.length < 6 || formData.password.length > 10)) {
+        newErrors.password = 'Password must be 6-10 characters';
+      }
+    }
+
+    // For edit mode, password is optional but if provided, must be 6-10 characters
+    if (mode === 'edit' && formData.password && formData.password.trim() !== '' &&
+        (formData.password.length < 6 || formData.password.length > 10)) {
+      newErrors.password = 'Password must be 6-10 characters';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    try {
+      // For edit mode, only send the data that's actually being changed
+      let submitData: CreateUserData;
+
+      if (mode === 'edit') {
+        submitData = {
+          user_name: formData.user_name,
+          user_email: formData.user_email,
+          user_type: formData.user_type,
+          user_phone: formData.user_phone,
+          user_role: formData.user_role,
+          password: formData.password || '', // Empty password won't be sent due to API filtering
+        };
+      } else {
+        submitData = formData;
+      }
+
+      await onSubmit(submitData);
+      onClose();
+      // Reset form only after successful submission
+      if (mode === 'create') {
+        setFormData({
+          user_name: '',
+          user_email: '',
+          user_type: 'Read_only',
+          user_phone: '',
+          password: '',
+          user_role: 'Picking',
+        });
+      }
       setErrors({});
     } catch (error) {
       console.error('Failed to submit form:', error);
@@ -76,8 +120,13 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
     }
   };
 
+  const handleClose = () => {
+    setErrors({});
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{mode === 'create' ? 'Create New User' : 'Edit User'}</DialogTitle>
@@ -85,7 +134,7 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
             {mode === 'create' ? 'Add a new user to the system.' : 'Update user information.'}
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="user_name">Name *</Label>
@@ -132,24 +181,30 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
               value={formData.user_phone}
               onChange={(e) => setFormData({ ...formData, user_phone: e.target.value })}
               placeholder="Enter phone number"
-              disabled={mode === 'edit'}
+              disabled={mode === 'edit'} // Disable phone number in edit mode
             />
+            {mode === 'edit' && (
+              <p className="text-xs text-muted-foreground">Phone number cannot be changed</p>
+            )}
             {errors.user_phone && <p className="text-sm text-destructive">{errors.user_phone}</p>}
           </div>
 
-          {mode === 'create' && (
-            <div className="space-y-2">
-              <Label htmlFor="password">Password *</Label>
-              <Input
-                id="password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="6-10 characters"
-              />
-              {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label htmlFor="password">
+              Password {mode === 'create' ? '*' : ''}
+            </Label>
+            <Input
+              id="password"
+              type="password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              placeholder={mode === 'create' ? "6-10 characters" : "Leave blank to keep current password"}
+            />
+            {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
+            {mode === 'edit' && (
+              <p className="text-xs text-muted-foreground">Leave blank to keep current password</p>
+            )}
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="user_role">Role *</Label>
@@ -167,7 +222,7 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading}>

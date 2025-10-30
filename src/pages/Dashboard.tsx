@@ -33,26 +33,9 @@ export default function Dashboard() {
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await userApi.getUsers();
-      console.log('API Response:', data);
-      console.log('Is Array:', Array.isArray(data));
-
-      // Handle different response structures
-      let usersData = [];
-      if (Array.isArray(data)) {
-        usersData = data;
-      } else if (data && typeof data === 'object') {
-        // Check if data is wrapped in a property
-        usersData = data.users || data.data || data.results || [];
-        // If it's still an object, try to convert it to array
-        if (!Array.isArray(usersData) && typeof usersData === 'object') {
-          usersData = Object.values(usersData);
-        }
-      }
-
-      console.log('Processed users:', usersData);
-      console.log('Users count:', usersData.length);
-      setUsers(Array.isArray(usersData) ? usersData : []);
+      const usersData = await userApi.getUsers();
+      console.log('Fetched users:', usersData);
+      setUsers(usersData);
     } catch (error) {
       console.error('Fetch error:', error);
       toast({
@@ -168,12 +151,51 @@ export default function Dashboard() {
   };
 
   const columnDefs: ColDef[] = useMemo(() => [
-    { field: 'record_id', headerName: 'ID', filter: 'agTextColumnFilter', flex: 1, minWidth: 100 },
-    { field: 'user_name', headerName: 'Name', filter: 'agTextColumnFilter', flex: 1, minWidth: 150 },
-    { field: 'user_email', headerName: 'Email', filter: 'agTextColumnFilter', flex: 1, minWidth: 200 },
-    { field: 'user_phone', headerName: 'Phone', filter: 'agTextColumnFilter', flex: 1, minWidth: 150 },
-    { field: 'user_type', headerName: 'Type', filter: 'agSetColumnFilter', flex: 1, minWidth: 130 },
-    { field: 'user_role', headerName: 'Role', filter: 'agSetColumnFilter', flex: 1, minWidth: 130 },
+    {
+      field: 'id',
+      headerName: 'ID',
+      filter: 'agTextColumnFilter',
+      flex: 1,
+      minWidth: 80,
+      maxWidth: 100
+    },
+    {
+      field: 'user_name',
+      headerName: 'Name',
+      filter: 'agTextColumnFilter',
+      flex: 1,
+      minWidth: 150
+    },
+    {
+      field: 'user_email',
+      headerName: 'Email',
+      filter: 'agTextColumnFilter',
+      flex: 1,
+      minWidth: 200
+    },
+    {
+      field: 'user_phone',
+      headerName: 'Phone',
+      filter: 'agTextColumnFilter',
+      flex: 1,
+      minWidth: 130
+    },
+    {
+      field: 'user_type',
+      headerName: 'Type',
+      filter: 'agSetColumnFilter',
+      flex: 1,
+      minWidth: 120,
+      valueFormatter: (params) => params.value ? params.value.charAt(0).toUpperCase() + params.value.slice(1) : ''
+    },
+    {
+      field: 'user_role',
+      headerName: 'Role',
+      filter: 'agSetColumnFilter',
+      flex: 1,
+      minWidth: 120,
+      valueFormatter: (params) => params.value ? params.value.charAt(0).toUpperCase() + params.value.slice(1) : ''
+    },
     {
       headerName: 'Actions',
       cellRenderer: ActionsCellRenderer,
@@ -196,7 +218,7 @@ export default function Dashboard() {
       user.user_phone?.toLowerCase().includes(searchLower) ||
       user.user_type?.toLowerCase().includes(searchLower) ||
       user.user_role?.toLowerCase().includes(searchLower) ||
-      user.record_id?.toLowerCase().includes(searchLower)
+      user.id?.toString().includes(searchLower)
     );
   }, [users, searchText]);
 
@@ -212,7 +234,7 @@ export default function Dashboard() {
             {user.user_role}
           </Badge>
         </div>
-      </CardHeader>
+      </CardContent>
       <CardContent className="space-y-3">
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Phone:</span>
@@ -220,11 +242,11 @@ export default function Dashboard() {
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Type:</span>
-          <span className="font-medium">{user.user_type}</span>
+          <span className="font-medium capitalize">{user.user_type}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">ID:</span>
-          <span className="font-medium font-mono text-xs">{user.record_id}</span>
+          <span className="font-medium font-mono text-xs">{user.id}</span>
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <Button
@@ -310,7 +332,7 @@ export default function Dashboard() {
               )}
 
               {!loading && filteredUsers.map((user) => (
-                <UserCard key={user.record_id} user={user} />
+                <UserCard key={user.id} user={user} />
               ))}
             </div>
           ) : (

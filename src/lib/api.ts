@@ -12,12 +12,21 @@ const api = axios.create({
 });
 
 export interface User {
-  record_id: string;
+  id: number;
+  record_id?: string;
   user_name: string;
   user_phone: string;
   user_email: string;
-  user_type: 'Admin' | 'Read_only' | 'Read_write';
-  user_role: 'Picking' | 'in-bound' | 'admin' | 'all-ops';
+  user_type: string;
+  user_role: string;
+  status: string | null;
+  created_at: string;
+  updated_at: string;
+  user_password: string;
+  user_password_expiry: string | null;
+  user_password_enabled: boolean;
+  user_otp: string | null;
+  user_otp_enabled: boolean;
 }
 
 export interface CreateUserData {
@@ -39,14 +48,18 @@ export const userApi = {
       console.log('Response data:', response.data);
       console.log('Response status:', response.status);
 
-      // Handle different response structures
-      let usersData = response.data;
+      // Extract users from the records property
+      const responseData = response.data;
+      let usersData = [];
 
-      // If response is an object with nested data, extract it
-      if (usersData && typeof usersData === 'object' && !Array.isArray(usersData)) {
-        // Try common nested data structures
-        usersData = usersData.data || usersData.users || usersData.results || usersData.items || [];
+      if (responseData && responseData.records && Array.isArray(responseData.records)) {
+        usersData = responseData.records;
+      } else if (Array.isArray(responseData)) {
+        usersData = responseData;
       }
+
+      console.log('Extracted users:', usersData);
+      console.log('Users count:', usersData.length);
 
       // Ensure we return an array
       return Array.isArray(usersData) ? usersData : [];
@@ -59,7 +72,12 @@ export const userApi = {
   // Get user by phone
   getUserByPhone: async (phone: string) => {
     const response = await api.get(`/user/users?user_phone=${phone}`);
-    return response.data;
+    const responseData = response.data;
+
+    if (responseData && responseData.records && Array.isArray(responseData.records)) {
+      return responseData.records;
+    }
+    return responseData;
   },
 
   // Create new user

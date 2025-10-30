@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { userApi, User, CreateUserData } from '@/lib/api';
 import { UserModal } from '@/components/UserModal';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Pencil, Mail, Phone, User as UserIcon, Shield, Briefcase } from 'lucide-react';
+import { ArrowLeft, Pencil, Mail, Phone, User as UserIcon, Shield, Briefcase, Calendar } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 
 export default function UserDetails() {
   const { phone } = useParams<{ phone: string }>();
@@ -19,12 +20,22 @@ export default function UserDetails() {
   useEffect(() => {
     const fetchUser = async () => {
       if (!phone) return;
-      
+
       setLoading(true);
       try {
         const data = await userApi.getUserByPhone(phone);
-        setUser(Array.isArray(data) && data.length > 0 ? data[0] : data);
+        console.log('User details data:', data);
+
+        // Handle array response from getUserByPhone
+        if (Array.isArray(data) && data.length > 0) {
+          setUser(data[0]);
+        } else if (data && typeof data === 'object') {
+          setUser(data);
+        } else {
+          setUser(null);
+        }
       } catch (error) {
+        console.error('Error fetching user:', error);
         toast({
           title: 'Error',
           description: 'Failed to fetch user details',
@@ -40,16 +51,21 @@ export default function UserDetails() {
 
   const handleEditUser = async (userData: CreateUserData) => {
     if (!user) return;
-    
+
     try {
       await userApi.updateUser(user.user_phone, userData);
       toast({
         title: 'Success',
         description: 'User updated successfully',
       });
-      
+
+      // Refresh user data
       const updatedData = await userApi.getUserByPhone(user.user_phone);
-      setUser(Array.isArray(updatedData) && updatedData.length > 0 ? updatedData[0] : updatedData);
+      if (Array.isArray(updatedData) && updatedData.length > 0) {
+        setUser(updatedData[0]);
+      } else if (updatedData && typeof updatedData === 'object') {
+        setUser(updatedData);
+      }
     } catch (error) {
       toast({
         title: 'Error',
@@ -58,6 +74,16 @@ export default function UserDetails() {
       });
       throw error;
     }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   if (loading) {
@@ -117,8 +143,20 @@ export default function UserDetails() {
 
         <Card className="shadow-lg">
           <CardHeader>
-            <CardTitle className="text-3xl text-gradient">{user.user_name}</CardTitle>
-            <CardDescription>User ID: {user.record_id}</CardDescription>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="text-3xl text-gradient">{user.user_name}</CardTitle>
+                <CardDescription>User ID: {user.id}</CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <Badge variant="secondary" className="capitalize">
+                  {user.user_type}
+                </Badge>
+                <Badge variant="outline" className="capitalize">
+                  {user.user_role}
+                </Badge>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2">
@@ -143,7 +181,7 @@ export default function UserDetails() {
                   <UserIcon className="h-5 w-5 mt-0.5 text-primary" />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-muted-foreground">User Type</p>
-                    <p className="text-base font-semibold">{user.user_type}</p>
+                    <p className="text-base font-semibold capitalize">{user.user_type}</p>
                   </div>
                 </div>
               </div>
@@ -160,8 +198,16 @@ export default function UserDetails() {
                 <div className="flex items-start gap-3 p-4 rounded-lg bg-secondary/50">
                   <Shield className="h-5 w-5 mt-0.5 text-primary" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-muted-foreground">Record ID</p>
-                    <p className="text-base font-semibold font-mono">{user.record_id}</p>
+                    <p className="text-sm font-medium text-muted-foreground">User ID</p>
+                    <p className="text-base font-semibold font-mono">{user.id}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-4 rounded-lg bg-secondary/50">
+                  <Calendar className="h-5 w-5 mt-0.5 text-primary" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-muted-foreground">Last Updated</p>
+                    <p className="text-base font-semibold">{formatDate(user.updated_at)}</p>
                   </div>
                 </div>
               </div>

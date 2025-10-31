@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function Dashboard() {
   const [users, setUsers] = useState<User[]>([]);
@@ -26,6 +27,7 @@ export default function Dashboard() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -135,52 +137,63 @@ export default function Dashboard() {
     {
       headerName: 'ID',
       field: 'id',
-      width: 80,
+      width: 100,
       cellClass: 'flex items-center justify-center',
     },
     {
       headerName: 'Name',
       field: 'user_name',
-      width: 150,
+      width: 180,
       cellClass: 'flex items-center',
     },
     {
       headerName: 'Email',
       field: 'user_email',
-      width: 200,
+      width: 250,
       cellClass: 'flex items-center',
     },
     {
       headerName: 'Phone',
       field: 'user_phone',
-      width: 140,
+      width: 150,
       cellClass: 'flex items-center',
     },
     {
       headerName: 'Type',
       field: 'user_type',
-      width: 120,
+      width: 140,
       cellClass: 'flex items-center capitalize',
+      cellRenderer: (params: any) => {
+        return <span className="capitalize">{params.value}</span>;
+      }
     },
     {
       headerName: 'Role',
       field: 'user_role',
-      width: 120,
+      width: 140,
       cellClass: 'flex items-center capitalize',
+      cellRenderer: (params: any) => {
+        return <span className="capitalize">{params.value}</span>;
+      }
     },
     {
       headerName: 'Status',
       field: 'status',
-      width: 100,
+      width: 120,
       cellClass: 'flex items-center',
       cellRenderer: (params: any) => {
-        return params.value || 'Active';
+        const status = params.value || 'Active';
+        return (
+          <Badge variant={status === 'Active' ? 'default' : 'secondary'}>
+            {status}
+          </Badge>
+        );
       }
     },
     {
       headerName: 'Actions',
       field: 'actions',
-      width: 120,
+      width: 100,
       cellRenderer: (params: any) => {
         const user = params.data;
         return (
@@ -202,9 +215,58 @@ export default function Dashboard() {
   const defaultColDef = {
     resizable: true,
     sortable: true,
-    filter: false, // Remove filter option as requested
+    filter: false,
     cellClass: 'flex items-center',
+    minWidth: 100,
   };
+
+  // Mobile Card Component
+  const UserCard = ({ user }: { user: User }) => (
+    <Card className="shadow-sm hover:shadow-md transition-shadow">
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-lg">{user.user_name}</CardTitle>
+            <CardDescription className="mt-1">{user.user_email}</CardDescription>
+          </div>
+          <Badge variant="secondary" className="capitalize">
+            {user.user_role}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex justify-between text-sm">
+          <span className="text-muted-foreground">Phone:</span>
+          <span className="font-medium">{user.user_phone}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-muted-foreground">Type:</span>
+          <span className="font-medium capitalize">{user.user_type}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-muted-foreground">User ID:</span>
+          <span className="font-medium font-mono text-xs">{user.id}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-muted-foreground">Status:</span>
+          <Badge variant={user.status === 'Active' ? 'default' : 'secondary'}>
+            {user.status || 'Active'}
+          </Badge>
+        </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => navigate(`/user/${user.user_phone}`)}
+            className="h-8 gap-1"
+          >
+            <Eye className="h-3 w-3" />
+            View
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20">
@@ -217,26 +279,29 @@ export default function Dashboard() {
         </div>
 
         <div className="bg-card rounded-lg shadow-lg p-6 space-y-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="relative flex-1 max-w-sm">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="relative w-full sm:max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search users..."
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                className="pl-10"
+                className="pl-10 w-full"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button
                 onClick={() => setIsValidateOtpModalOpen(true)}
                 variant="outline"
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
               >
                 <Shield className="h-4 w-4" />
                 Validate User OTP
               </Button>
-              <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2">
+              <Button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="gap-2 w-full sm:w-auto"
+              >
                 <Plus className="h-4 w-4" />
                 Create New User
               </Button>
@@ -261,18 +326,47 @@ export default function Dashboard() {
           )}
 
           {!loading && filteredUsers.length > 0 && (
-            <div className="ag-theme-alpine" style={{ height: '600px', width: '100%' }}>
-              <AgGridReact
-                rowData={filteredUsers}
-                columnDefs={columnDefs}
-                defaultColDef={defaultColDef}
-                pagination={true}
-                paginationPageSize={10}
-                suppressCellFocus={true}
-                rowHeight={60}
-                headerHeight={50}
-              />
-            </div>
+            <>
+              {/* Mobile View - Cards */}
+              {isMobile && (
+                <div className="grid grid-cols-1 gap-4">
+                  {filteredUsers.map((user) => (
+                    <UserCard key={user.id} user={user} />
+                  ))}
+                </div>
+              )}
+
+              {/* Desktop View - AG Grid */}
+              {!isMobile && (
+                <div
+                  className="ag-theme-alpine"
+                  style={{
+                    height: '600px',
+                    width: '100%',
+                    '--ag-header-height': '50px',
+                    '--ag-row-height': '60px',
+                    '--ag-header-background-color': 'hsl(262 40% 55%)',
+                    '--ag-header-foreground-color': 'white',
+                    '--ag-row-hover-color': 'hsl(262 20% 95%)',
+                    '--ag-border-color': 'hsl(262 20% 90%)',
+                  } as React.CSSProperties}
+                >
+                  <AgGridReact
+                    rowData={filteredUsers}
+                    columnDefs={columnDefs}
+                    defaultColDef={defaultColDef}
+                    pagination={true}
+                    paginationPageSize={10}
+                    suppressCellFocus={true}
+                    rowHeight={60}
+                    headerHeight={50}
+                    domLayout='normal'
+                    ensureDomOrder={true}
+                    animateRows={true}
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

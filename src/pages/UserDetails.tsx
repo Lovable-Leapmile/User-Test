@@ -2,20 +2,21 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { userApi, User, CreateUserData } from '@/lib/api';
-import { UserModal } from '@/components/UserModal';
-import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Pencil, Mail, Phone, User as UserIcon, Shield, Briefcase, Calendar } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { userApi, User } from '@/lib/api';
+import { UserModal } from '@/components/UserModal';
+import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog';
+import { useToast } from '@/hooks/use-toast';
+import { ArrowLeft, Pencil, Trash2, Calendar, Phone, Mail, User as UserIcon, Shield } from 'lucide-react';
 
 export default function UserDetails() {
   const { phone } = useParams<{ phone: string }>();
-  const navigate = useNavigate();
-  const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -23,31 +24,34 @@ export default function UserDetails() {
 
       setLoading(true);
       try {
-        const data = await userApi.getUserByPhone(phone);
-        console.log('User details data:', data);
-
-        // Handle array response from getUserByPhone
-        if (data && data.length > 0) {
-          setUser(data[0]);
+        const users = await userApi.getUserByPhone(phone);
+        if (users.length > 0) {
+          setUser(users[0]);
         } else {
-          setUser(null);
+          toast({
+            title: 'Error',
+            description: 'User not found',
+            variant: 'destructive',
+          });
+          navigate('/dashboard');
         }
       } catch (error) {
-        console.error('Error fetching user:', error);
+        console.error('Fetch error:', error);
         toast({
           title: 'Error',
           description: 'Failed to fetch user details',
           variant: 'destructive',
         });
+        navigate('/dashboard');
       } finally {
         setLoading(false);
       }
     };
 
     fetchUser();
-  }, [phone, toast]);
+  }, [phone, navigate, toast]);
 
-  const handleEditUser = async (userData: CreateUserData) => {
+  const handleEditUser = async (userData: any) => {
     if (!user) return;
 
     try {
@@ -56,13 +60,12 @@ export default function UserDetails() {
         title: 'Success',
         description: 'User updated successfully',
       });
-
-      // Refresh user data
-      const updatedData = await userApi.getUserByPhone(user.user_phone);
-      if (updatedData && updatedData.length > 0) {
-        setUser(updatedData[0]);
-      }
       setIsEditModalOpen(false);
+      // Refresh user data
+      const users = await userApi.getUserByPhone(user.user_phone);
+      if (users.length > 0) {
+        setUser(users[0]);
+      }
     } catch (error) {
       toast({
         title: 'Error',
@@ -73,34 +76,32 @@ export default function UserDetails() {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const handleDeleteUser = async () => {
+    if (!user) return;
+
+    try {
+      await userApi.deleteUser(user.user_phone);
+      toast({
+        title: 'Success',
+        description: 'User deleted successfully',
+      });
+      navigate('/dashboard');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to delete user';
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
+    }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20">
-        <div className="container mx-auto p-6 space-y-6">
-          <Skeleton className="h-10 w-48" />
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-8 w-64" />
-              <Skeleton className="h-4 w-48" />
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[...Array(6)].map((_, i) => (
-                  <Skeleton key={i} className="h-16 w-full" />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground mt-2">Loading user details...</p>
         </div>
       </div>
     );
@@ -108,18 +109,12 @@ export default function UserDetails() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20">
-        <div className="container mx-auto p-6">
-          <Button variant="ghost" onClick={() => navigate('/')} className="mb-6">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
-          </Button>
-          <Card>
-            <CardContent className="flex items-center justify-center h-64">
-              <p className="text-muted-foreground">User not found</p>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card>
+          <CardContent className="flex items-center justify-center h-32">
+            <p className="text-muted-foreground">User not found</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -127,98 +122,168 @@ export default function UserDetails() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20">
       <div className="container mx-auto p-6 space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={() => navigate('/')}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
-          </Button>
-          <Button onClick={() => setIsEditModalOpen(true)} className="gap-2">
-            <Pencil className="h-4 w-4" />
-            Edit User
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-4xl font-bold">User Details</h1>
+              <p className="text-muted-foreground mt-2">Detailed information about the user</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setIsEditModalOpen(true)}
+              variant="outline"
+              className="gap-2"
+            >
+              <Pencil className="h-4 w-4" />
+              Edit User
+            </Button>
+            <Button
+              onClick={() => setIsDeleteDialogOpen(true)}
+              variant="destructive"
+              className="gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete User
+            </Button>
+          </div>
         </div>
 
-        <Card className="shadow-lg">
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className="text-3xl text-gradient">{user.user_name}</CardTitle>
-                <CardDescription>User ID: {user.id}</CardDescription>
+        {/* User Information Cards */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Basic Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserIcon className="h-5 w-5" />
+                Basic Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Name:</span>
+                <span>{user.user_name}</span>
               </div>
-              <div className="flex gap-2">
+              <div className="flex justify-between items-center">
+                <span className="font-medium">ID:</span>
+                <Badge variant="outline">{user.id}</Badge>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Status:</span>
+                <Badge variant={user.status === 'active' ? 'default' : 'secondary'}>
+                  {user.status || 'Active'}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Contact Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="h-5 w-5" />
+                Contact Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Email:</span>
+                <span>{user.user_email}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Phone:</span>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  {user.user_phone}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Role & Permissions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Role & Permissions
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="font-medium">User Type:</span>
                 <Badge variant="secondary" className="capitalize">
                   {user.user_type}
                 </Badge>
-                <Badge variant="outline" className="capitalize">
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Role:</span>
+                <Badge variant="secondary" className="capitalize">
                   {user.user_role}
                 </Badge>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="space-y-4">
-                <div className="flex items-start gap-3 p-4 rounded-lg bg-secondary/50">
-                  <Mail className="h-5 w-5 mt-0.5 text-primary" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-muted-foreground">Email Address</p>
-                    <p className="text-base font-semibold">{user.user_email}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 p-4 rounded-lg bg-secondary/50">
-                  <Phone className="h-5 w-5 mt-0.5 text-primary" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-muted-foreground">Phone Number</p>
-                    <p className="text-base font-semibold">{user.user_phone}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 p-4 rounded-lg bg-secondary/50">
-                  <UserIcon className="h-5 w-5 mt-0.5 text-primary" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-muted-foreground">User Type</p>
-                    <p className="text-base font-semibold capitalize">{user.user_type}</p>
-                  </div>
-                </div>
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Password Enabled:</span>
+                <Badge variant={user.user_password_enabled ? 'default' : 'secondary'}>
+                  {user.user_password_enabled ? 'Yes' : 'No'}
+                </Badge>
               </div>
-
-              <div className="space-y-4">
-                <div className="flex items-start gap-3 p-4 rounded-lg bg-secondary/50">
-                  <Briefcase className="h-5 w-5 mt-0.5 text-primary" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-muted-foreground">Role</p>
-                    <p className="text-base font-semibold capitalize">{user.user_role}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 p-4 rounded-lg bg-secondary/50">
-                  <Shield className="h-5 w-5 mt-0.5 text-primary" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-muted-foreground">User ID</p>
-                    <p className="text-base font-semibold font-mono">{user.id}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 p-4 rounded-lg bg-secondary/50">
-                  <Calendar className="h-5 w-5 mt-0.5 text-primary" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-muted-foreground">Last Updated</p>
-                    <p className="text-base font-semibold">{formatDate(user.updated_at)}</p>
-                  </div>
-                </div>
+              <div className="flex justify-between items-center">
+                <span className="font-medium">OTP Enabled:</span>
+                <Badge variant={user.user_otp_enabled ? 'default' : 'secondary'}>
+                  {user.user_otp_enabled ? 'Yes' : 'No'}
+                </Badge>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          {/* System Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                System Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Created At:</span>
+                <span>{new Date(user.created_at).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Updated At:</span>
+                <span>{new Date(user.updated_at).toLocaleString()}</span>
+              </div>
+              {user.user_password_expiry && (
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Password Expiry:</span>
+                  <span>{new Date(user.user_password_expiry).toLocaleString()}</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
+      {/* Edit Modal */}
       <UserModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         onSubmit={handleEditUser}
         initialData={user}
         mode="edit"
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onConfirm={handleDeleteUser}
+        userName={user.user_name}
+        isLoading={false}
       />
     </div>
   );

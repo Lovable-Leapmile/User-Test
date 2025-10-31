@@ -4,11 +4,15 @@ import { Input } from '@/components/ui/input';
 import { userApi, User, CreateUserData } from '@/lib/api';
 import { UserModal } from '@/components/UserModal';
 import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog';
+import { ValidateOtpModal } from '@/components/ValidateOtpModal';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, Pencil, Trash2, Plus, Search } from 'lucide-react';
+import { Eye, Pencil, Trash2, Plus, Search, Shield } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { AgGridReact } from 'ag-grid-react';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-alpine.css';
 
 export default function Dashboard() {
   const [users, setUsers] = useState<User[]>([]);
@@ -17,6 +21,7 @@ export default function Dashboard() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isValidateOtpModalOpen, setIsValidateOtpModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const navigate = useNavigate();
@@ -111,7 +116,6 @@ export default function Dashboard() {
     }
   };
 
-
   const filteredUsers = useMemo(() => {
     if (!searchText) return users;
 
@@ -126,67 +130,81 @@ export default function Dashboard() {
     );
   }, [users, searchText]);
 
-  const UserCard = ({ user }: { user: User }) => (
-    <Card className="shadow-sm hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-lg">{user.user_name}</CardTitle>
-            <CardDescription className="mt-1">{user.user_email}</CardDescription>
+  // AG Grid column definitions
+  const columnDefs = [
+    {
+      headerName: 'ID',
+      field: 'id',
+      width: 80,
+      cellClass: 'flex items-center justify-center',
+    },
+    {
+      headerName: 'Name',
+      field: 'user_name',
+      width: 150,
+      cellClass: 'flex items-center',
+    },
+    {
+      headerName: 'Email',
+      field: 'user_email',
+      width: 200,
+      cellClass: 'flex items-center',
+    },
+    {
+      headerName: 'Phone',
+      field: 'user_phone',
+      width: 140,
+      cellClass: 'flex items-center',
+    },
+    {
+      headerName: 'Type',
+      field: 'user_type',
+      width: 120,
+      cellClass: 'flex items-center capitalize',
+    },
+    {
+      headerName: 'Role',
+      field: 'user_role',
+      width: 120,
+      cellClass: 'flex items-center capitalize',
+    },
+    {
+      headerName: 'Status',
+      field: 'status',
+      width: 100,
+      cellClass: 'flex items-center',
+      cellRenderer: (params: any) => {
+        return params.value || 'Active';
+      }
+    },
+    {
+      headerName: 'Actions',
+      field: 'actions',
+      width: 120,
+      cellRenderer: (params: any) => {
+        const user = params.data;
+        return (
+          <div className="flex justify-center gap-1 h-full items-center">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => navigate(`/user/${user.user_phone}`)}
+              className="h-8 w-8 p-0"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
           </div>
-          <Badge variant="secondary" className="capitalize">
-            {user.user_role}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Phone:</span>
-          <span className="font-medium">{user.user_phone}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Type:</span>
-          <span className="font-medium capitalize">{user.user_type}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">User ID:</span>
-          <span className="font-medium font-mono text-xs">{user.id}</span>
-        </div>
-        <div className="flex justify-end gap-2 pt-2">
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => navigate(`/user/${user.user_phone}`)}
-            className="h-8 w-8 p-0"
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              setSelectedUser(user);
-              setIsEditModalOpen(true);
-            }}
-            className="h-8 w-8 p-0"
-          >
-            <Pencil className="h-4 w-4" />
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              setSelectedUser(user);
-              setIsDeleteDialogOpen(true);
-            }}
-            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
+        );
+      }
+    }
+  ];
+
+  const defaultColDef = {
+    resizable: true,
+    sortable: true,
+    filter: false, // Remove filter option as requested
+    cellClass: 'flex items-center',
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20">
@@ -209,10 +227,20 @@ export default function Dashboard() {
                 className="pl-10"
               />
             </div>
-            <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Create New User
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setIsValidateOtpModalOpen(true)}
+                variant="outline"
+                className="gap-2"
+              >
+                <Shield className="h-4 w-4" />
+                Validate User OTP
+              </Button>
+              <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Create New User
+              </Button>
+            </div>
           </div>
 
           {loading && (
@@ -233,10 +261,17 @@ export default function Dashboard() {
           )}
 
           {!loading && filteredUsers.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredUsers.map((user) => (
-                <UserCard key={user.id} user={user} />
-              ))}
+            <div className="ag-theme-alpine" style={{ height: '600px', width: '100%' }}>
+              <AgGridReact
+                rowData={filteredUsers}
+                columnDefs={columnDefs}
+                defaultColDef={defaultColDef}
+                pagination={true}
+                paginationPageSize={10}
+                suppressCellFocus={true}
+                rowHeight={60}
+                headerHeight={50}
+              />
             </div>
           )}
         </div>
@@ -269,6 +304,11 @@ export default function Dashboard() {
         onConfirm={handleDeleteUser}
         userName={selectedUser?.user_name || ''}
         isLoading={deleteLoading}
+      />
+
+      <ValidateOtpModal
+        isOpen={isValidateOtpModalOpen}
+        onClose={() => setIsValidateOtpModalOpen(false)}
       />
     </div>
   );

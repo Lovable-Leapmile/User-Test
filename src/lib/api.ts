@@ -37,6 +37,28 @@ export interface CreateUserData {
   user_role: string;
 }
 
+export interface GenerateOtpData {
+  user_type: string;
+  user_phone: string;
+  user_role: string;
+}
+
+export interface ValidateOtpData {
+  user_phone: string;
+  user_otp: string;
+}
+
+export interface ValidateOtpResponse {
+  status: string;
+  status_code: number;
+  message: string;
+  timestamp: string;
+  token: string;
+  statusbool: boolean;
+  ok: boolean;
+  api_processing_time: number;
+}
+
 export const userApi = {
   getUsers: async (filters?: Record<string, string>): Promise<User[]> => {
     try {
@@ -71,13 +93,18 @@ export const userApi = {
 
   createUser: async (userData: CreateUserData) => {
     try {
+      // Convert role values to match API expectations
+      const convertedRole = userData.user_role === 'in-bound' ? 'inbound' :
+                           userData.user_role === 'all-ops' ? 'all_ops' :
+                           userData.user_role;
+
       const params = new URLSearchParams();
       params.append('user_name', userData.user_name);
       params.append('user_email', userData.user_email);
       params.append('user_type', userData.user_type);
       params.append('user_phone', userData.user_phone);
       params.append('password', userData.password);
-      params.append('user_role', userData.user_role);
+      params.append('user_role', convertedRole);
 
       const response = await api.post(`/user/user?${params.toString()}`);
       return response.data;
@@ -101,7 +128,10 @@ export const userApi = {
         updateData.user_type = userData.user_type;
       }
       if (userData.user_role && userData.user_role.trim() !== '') {
-        updateData.user_role = userData.user_role;
+        // Convert role values to match API expectations
+        updateData.user_role = userData.user_role === 'in-bound' ? 'inbound' :
+                              userData.user_role === 'all-ops' ? 'all_ops' :
+                              userData.user_role;
       }
       if (userData.password && userData.password.trim() !== '') {
         updateData.password = userData.password;
@@ -130,7 +160,7 @@ export const userApi = {
 
       const user = users[0];
       console.log('User found:', user);
-      
+
       const userId = user.id;
       console.log('Using id for delete:', userId);
 
@@ -143,6 +173,40 @@ export const userApi = {
       return response.data;
     } catch (error) {
       console.error('Delete User API Error:', error);
+      throw error;
+    }
+  },
+
+  generateUserOtp: async (otpData: GenerateOtpData) => {
+    try {
+      // Convert role values to match API expectations
+      const convertedRole = otpData.user_role === 'in-bound' ? 'inbound' :
+                           otpData.user_role === 'all-ops' ? 'all_ops' :
+                           otpData.user_role;
+
+      const params = new URLSearchParams();
+      params.append('user_type', otpData.user_type);
+      params.append('user_phone', otpData.user_phone);
+      params.append('user_role', convertedRole);
+
+      const response = await api.post(`/user/generate_user_otp?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      console.error('Generate OTP API Error:', error);
+      throw error;
+    }
+  },
+
+  validateWithOtp: async (validateData: ValidateOtpData): Promise<ValidateOtpResponse> => {
+    try {
+      const params = new URLSearchParams();
+      params.append('user_phone', validateData.user_phone);
+      params.append('user_otp', validateData.user_otp);
+
+      const response = await api.get(`/user/validate_with_otp?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      console.error('Validate OTP API Error:', error);
       throw error;
     }
   },

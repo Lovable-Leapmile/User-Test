@@ -59,6 +59,7 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
       if (!formData.user_email.trim()) newErrors.user_email = 'Email is required';
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.user_email)) newErrors.user_email = 'Invalid email format';
       if (!formData.user_phone.trim()) newErrors.user_phone = 'Phone number is required';
+      if (!/^\d{10}$/.test(formData.user_phone)) newErrors.user_phone = 'Phone number must be exactly 10 digits';
       if (!formData.password) newErrors.password = 'Password is required';
       if (formData.password && (formData.password.length < 6 || formData.password.length > 10)) {
         newErrors.password = 'Password must be 6-10 characters';
@@ -69,6 +70,9 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
     if (mode === 'edit') {
       if (formData.user_email && formData.user_email.trim() !== '' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.user_email)) {
         newErrors.user_email = 'Invalid email format';
+      }
+      if (formData.user_phone && formData.user_phone.trim() !== '' && !/^\d{10}$/.test(formData.user_phone)) {
+        newErrors.user_phone = 'Phone number must be exactly 10 digits';
       }
       if (formData.password && formData.password.trim() !== '' &&
           (formData.password.length < 6 || formData.password.length > 10)) {
@@ -127,6 +131,11 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
   const handleClose = () => {
     setErrors({});
     onClose();
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setFormData({ ...formData, user_phone: value });
   };
 
   return (
@@ -200,8 +209,8 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
               id="user_phone"
               type="tel"
               value={formData.user_phone}
-              onChange={(e) => setFormData({ ...formData, user_phone: e.target.value })}
-              placeholder="Enter phone number"
+              onChange={handlePhoneChange}
+              placeholder="Enter 10-digit phone number"
               disabled={mode === 'edit'} // Disable phone number in edit mode
             />
             {mode === 'edit' && (

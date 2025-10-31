@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { userApi, User, CreateUserData } from '@/lib/api';
@@ -15,6 +15,94 @@ import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { useIsMobile } from '@/hooks/use-mobile';
 
+// Define the column definitions outside the component to prevent unnecessary recreations
+const getColumnDefs = (navigate: any) => [
+  {
+    headerName: 'ID',
+    field: 'id',
+    width: 100,
+    cellClass: 'flex items-center justify-center',
+  },
+  {
+    headerName: 'Name',
+    field: 'user_name',
+    width: 180,
+    cellClass: 'flex items-center',
+  },
+  {
+    headerName: 'Email',
+    field: 'user_email',
+    width: 250,
+    cellClass: 'flex items-center',
+  },
+  {
+    headerName: 'Phone',
+    field: 'user_phone',
+    width: 150,
+    cellClass: 'flex items-center',
+  },
+  {
+    headerName: 'Type',
+    field: 'user_type',
+    width: 140,
+    cellClass: 'flex items-center capitalize',
+    cellRenderer: (params: any) => {
+      return <span className="capitalize">{params.value}</span>;
+    }
+  },
+  {
+    headerName: 'Role',
+    field: 'user_role',
+    width: 140,
+    cellClass: 'flex items-center capitalize',
+    cellRenderer: (params: any) => {
+      return <span className="capitalize">{params.value}</span>;
+    }
+  },
+  {
+    headerName: 'Status',
+    field: 'status',
+    width: 120,
+    cellClass: 'flex items-center',
+    cellRenderer: (params: any) => {
+      const status = params.value || 'Active';
+      return (
+        <Badge variant={status === 'Active' ? 'default' : 'secondary'}>
+          {status}
+        </Badge>
+      );
+    }
+  },
+  {
+    headerName: 'Actions',
+    field: 'actions',
+    width: 100,
+    cellRenderer: (params: any) => {
+      const user = params.data;
+      return (
+        <div className="flex justify-center gap-1 h-full items-center">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => navigate(`/user/${user.user_phone}`)}
+            className="h-8 w-8 p-0"
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+        </div>
+      );
+    }
+  }
+];
+
+const defaultColDef = {
+  resizable: true,
+  sortable: true,
+  filter: false,
+  cellClass: 'flex items-center',
+  minWidth: 100,
+};
+
 export default function Dashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +116,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const gridRef = useRef<AgGridReact>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -132,93 +221,7 @@ export default function Dashboard() {
     );
   }, [users, searchText]);
 
-  // AG Grid column definitions
-  const columnDefs = [
-    {
-      headerName: 'ID',
-      field: 'id',
-      width: 100,
-      cellClass: 'flex items-center justify-center',
-    },
-    {
-      headerName: 'Name',
-      field: 'user_name',
-      width: 180,
-      cellClass: 'flex items-center',
-    },
-    {
-      headerName: 'Email',
-      field: 'user_email',
-      width: 250,
-      cellClass: 'flex items-center',
-    },
-    {
-      headerName: 'Phone',
-      field: 'user_phone',
-      width: 150,
-      cellClass: 'flex items-center',
-    },
-    {
-      headerName: 'Type',
-      field: 'user_type',
-      width: 140,
-      cellClass: 'flex items-center capitalize',
-      cellRenderer: (params: any) => {
-        return <span className="capitalize">{params.value}</span>;
-      }
-    },
-    {
-      headerName: 'Role',
-      field: 'user_role',
-      width: 140,
-      cellClass: 'flex items-center capitalize',
-      cellRenderer: (params: any) => {
-        return <span className="capitalize">{params.value}</span>;
-      }
-    },
-    {
-      headerName: 'Status',
-      field: 'status',
-      width: 120,
-      cellClass: 'flex items-center',
-      cellRenderer: (params: any) => {
-        const status = params.value || 'Active';
-        return (
-          <Badge variant={status === 'Active' ? 'default' : 'secondary'}>
-            {status}
-          </Badge>
-        );
-      }
-    },
-    {
-      headerName: 'Actions',
-      field: 'actions',
-      width: 100,
-      cellRenderer: (params: any) => {
-        const user = params.data;
-        return (
-          <div className="flex justify-center gap-1 h-full items-center">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => navigate(`/user/${user.user_phone}`)}
-              className="h-8 w-8 p-0"
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
-          </div>
-        );
-      }
-    }
-  ];
-
-  const defaultColDef = {
-    resizable: true,
-    sortable: true,
-    filter: false,
-    cellClass: 'flex items-center',
-    minWidth: 100,
-  };
+  const columnDefs = useMemo(() => getColumnDefs(navigate), [navigate]);
 
   // Mobile Card Component
   const UserCard = ({ user }: { user: User }) => (
@@ -343,15 +346,10 @@ export default function Dashboard() {
                   style={{
                     height: '600px',
                     width: '100%',
-                    '--ag-header-height': '50px',
-                    '--ag-row-height': '60px',
-                    '--ag-header-background-color': 'hsl(262 40% 55%)',
-                    '--ag-header-foreground-color': 'white',
-                    '--ag-row-hover-color': 'hsl(262 20% 95%)',
-                    '--ag-border-color': 'hsl(262 20% 90%)',
-                  } as React.CSSProperties}
+                  }}
                 >
                   <AgGridReact
+                    ref={gridRef}
                     rowData={filteredUsers}
                     columnDefs={columnDefs}
                     defaultColDef={defaultColDef}
@@ -361,8 +359,9 @@ export default function Dashboard() {
                     rowHeight={60}
                     headerHeight={50}
                     domLayout='normal'
-                    ensureDomOrder={true}
                     animateRows={true}
+                    enableCellTextSelection={true}
+                    ensureDomOrder={true}
                   />
                 </div>
               )}

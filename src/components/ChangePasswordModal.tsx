@@ -103,7 +103,7 @@ export function ChangePasswordModal({ isOpen, onClose, userPhone }: ChangePasswo
 
     setIsLoading(true);
     try {
-      const response = await axios.post(
+      const response = await axios.patch(
         `https://testhostharan.leapmile.com/user/user/change_password?user_phone=${phoneNumber}&password=${newPassword}`
       );
 

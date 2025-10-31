@@ -181,7 +181,6 @@ export function ValidateOtpModal({ isOpen, onClose }: ValidateOtpModalProps) {
                   <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="picking">Picking</SelectItem>
                   <SelectItem value="in-bound">In-bound</SelectItem>
-                  <SelectItem value="all-ops">All Ops</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -256,14 +255,6 @@ export function ValidateOtpModal({ isOpen, onClose }: ValidateOtpModalProps) {
                   <span className="text-sm font-medium">Status Code:</span>
                   <Badge variant="outline">{validationResult.status_code}</Badge>
                 </div>
-                {validationResult.token && (
-                  <div className="space-y-1">
-                    <span className="text-sm font-medium">Token:</span>
-                    <div className="p-2 bg-muted rounded text-xs font-mono break-all">
-                      {validationResult.token}
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
 

@@ -12,8 +12,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AgGridReact } from 'ag-grid-react';
+import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
+
+// Register AG Grid modules
+ModuleRegistry.registerModules([AllCommunityModule]);
 
 export default function Dashboard() {
   const [users, setUsers] = useState<User[]>([]);
@@ -136,44 +140,44 @@ export default function Dashboard() {
   // AG Grid column definitions
   const columnDefs = useMemo(() => [
     {
-      headerName: 'ID',
+      headerName: 'User ID',
       field: 'id',
       sortable: true,
-      filter: true,
-      width: 100,
-      minWidth: 80,
+      filter: false,
+      width: 120,
+      minWidth: 100,
     },
     {
       headerName: 'Name',
       field: 'user_name',
       sortable: true,
-      filter: true,
+      filter: false,
       flex: 1,
-      minWidth: 150,
+      minWidth: 180,
     },
     {
       headerName: 'Email',
       field: 'user_email',
       sortable: true,
-      filter: true,
+      filter: false,
       flex: 2,
-      minWidth: 200,
+      minWidth: 250,
     },
     {
       headerName: 'Phone',
       field: 'user_phone',
       sortable: true,
-      filter: true,
-      width: 150,
-      minWidth: 120,
+      filter: false,
+      width: 160,
+      minWidth: 140,
     },
     {
       headerName: 'Type',
       field: 'user_type',
       sortable: true,
-      filter: true,
-      width: 120,
-      minWidth: 100,
+      filter: false,
+      width: 130,
+      minWidth: 110,
       cellRenderer: (params: any) => {
         return <span className="capitalize">{params.value}</span>;
       }
@@ -182,9 +186,9 @@ export default function Dashboard() {
       headerName: 'Role',
       field: 'user_role',
       sortable: true,
-      filter: true,
-      width: 120,
-      minWidth: 100,
+      filter: false,
+      width: 130,
+      minWidth: 110,
       cellRenderer: (params: any) => {
         return <span className="capitalize">{params.value}</span>;
       }
@@ -193,9 +197,9 @@ export default function Dashboard() {
       headerName: 'Status',
       field: 'status',
       sortable: true,
-      filter: true,
-      width: 120,
-      minWidth: 100,
+      filter: false,
+      width: 130,
+      minWidth: 110,
       cellRenderer: (params: any) => {
         const status = params.value || 'Active';
         return (
@@ -208,7 +212,8 @@ export default function Dashboard() {
     {
       headerName: 'Action',
       field: 'action',
-      width: 100,
+      width: 120,
+      minWidth: 100,
       cellRenderer: (params: any) => {
         const user = params.data;
         return (
@@ -233,7 +238,7 @@ export default function Dashboard() {
   const defaultColDef = useMemo(() => ({
     resizable: true,
     sortable: true,
-    filter: true,
+    filter: false,
   }), []);
 
   const onGridReady = (params: any) => {
@@ -242,9 +247,6 @@ export default function Dashboard() {
 
   const handleGlobalFilter = useCallback((value: string) => {
     setSearchText(value);
-    if (gridRef.current?.api) {
-      gridRef.current.api.setQuickFilter(value);
-    }
   }, []);
 
   // Mobile Card Component
@@ -302,7 +304,7 @@ export default function Dashboard() {
       <div className="container mx-auto p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold">User Management</h1>
+            <h1 className="text-4xl font-bold">User Test App</h1>
             <p className="text-muted-foreground mt-2">Manage and monitor all users in the system</p>
           </div>
         </div>
@@ -380,8 +382,8 @@ export default function Dashboard() {
                     animateRows={true}
                     enableCellTextSelection={true}
                     onGridReady={onGridReady}
-                    rowHeight={50}
-                    headerHeight={50}
+                    rowHeight={56}
+                    headerHeight={56}
                     suppressColumnVirtualisation={true}
                     rowSelection="single"
                     suppressRowClickSelection={true}

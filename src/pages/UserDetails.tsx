@@ -33,7 +33,7 @@ export default function UserDetails() {
             description: 'User not found',
             variant: 'destructive',
           });
-          navigate('/dashboard');
+          navigate('/');
         }
       } catch (error) {
         console.error('Fetch error:', error);
@@ -42,7 +42,7 @@ export default function UserDetails() {
           description: 'Failed to fetch user details',
           variant: 'destructive',
         });
-        navigate('/dashboard');
+        navigate('/');
       } finally {
         setLoading(false);
       }
@@ -85,7 +85,7 @@ export default function UserDetails() {
         title: 'Success',
         description: 'User deleted successfully',
       });
-      navigate('/dashboard');
+      navigate('/');
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.message || 'Failed to delete user';
       toast({
@@ -125,7 +125,7 @@ export default function UserDetails() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
+            <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>

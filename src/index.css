@@ -67,8 +67,8 @@ All colors MUST be HSL.
 }
 
 /* AG Grid custom theme */
-.ag-theme-custom {
-  --ag-header-background-color: hsl(262 40% 55%);
+.ag-theme-alpine {
+  --ag-header-background-color: #805eba;
   --ag-header-foreground-color: white;
   --ag-row-hover-color: hsl(262 20% 95%);
   --ag-selected-row-background-color: hsl(262 30% 92%);

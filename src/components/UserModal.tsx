@@ -248,7 +248,6 @@ export function UserModal({ isOpen, onClose, onSubmit, initialData, mode }: User
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="picking">Picking</SelectItem>
                 <SelectItem value="in-bound">In-bound</SelectItem>
-                <SelectItem value="all-ops">All Ops</SelectItem>
               </SelectContent>
             </Select>
             {mode === 'edit' && (

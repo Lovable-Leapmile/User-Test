@@ -7,101 +7,13 @@ import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog';
 import { ValidateOtpModal } from '@/components/ValidateOtpModal';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, Pencil, Trash2, Plus, Search, Shield } from 'lucide-react';
+import { Eye, Plus, Search, Shield } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { AgGridReact } from 'ag-grid-react';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
-import { useIsMobile } from '@/hooks/use-mobile';
-
-// Define the column definitions outside the component to prevent unnecessary recreations
-const getColumnDefs = (navigate: any) => [
-  {
-    headerName: 'ID',
-    field: 'id',
-    width: 100,
-    cellClass: 'flex items-center justify-center',
-  },
-  {
-    headerName: 'Name',
-    field: 'user_name',
-    width: 180,
-    cellClass: 'flex items-center',
-  },
-  {
-    headerName: 'Email',
-    field: 'user_email',
-    width: 250,
-    cellClass: 'flex items-center',
-  },
-  {
-    headerName: 'Phone',
-    field: 'user_phone',
-    width: 150,
-    cellClass: 'flex items-center',
-  },
-  {
-    headerName: 'Type',
-    field: 'user_type',
-    width: 140,
-    cellClass: 'flex items-center capitalize',
-    cellRenderer: (params: any) => {
-      return <span className="capitalize">{params.value}</span>;
-    }
-  },
-  {
-    headerName: 'Role',
-    field: 'user_role',
-    width: 140,
-    cellClass: 'flex items-center capitalize',
-    cellRenderer: (params: any) => {
-      return <span className="capitalize">{params.value}</span>;
-    }
-  },
-  {
-    headerName: 'Status',
-    field: 'status',
-    width: 120,
-    cellClass: 'flex items-center',
-    cellRenderer: (params: any) => {
-      const status = params.value || 'Active';
-      return (
-        <Badge variant={status === 'Active' ? 'default' : 'secondary'}>
-          {status}
-        </Badge>
-      );
-    }
-  },
-  {
-    headerName: 'Actions',
-    field: 'actions',
-    width: 100,
-    cellRenderer: (params: any) => {
-      const user = params.data;
-      return (
-        <div className="flex justify-center gap-1 h-full items-center">
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => navigate(`/user/${user.user_phone}`)}
-            className="h-8 w-8 p-0"
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
-        </div>
-      );
-    }
-  }
-];
-
-const defaultColDef = {
-  resizable: true,
-  sortable: true,
-  filter: false,
-  cellClass: 'flex items-center',
-  minWidth: 100,
-};
 
 export default function Dashboard() {
   const [users, setUsers] = useState<User[]>([]);
@@ -221,7 +133,119 @@ export default function Dashboard() {
     );
   }, [users, searchText]);
 
-  const columnDefs = useMemo(() => getColumnDefs(navigate), [navigate]);
+  // AG Grid column definitions
+  const columnDefs = useMemo(() => [
+    {
+      headerName: 'ID',
+      field: 'id',
+      sortable: true,
+      filter: true,
+      width: 100,
+      minWidth: 80,
+    },
+    {
+      headerName: 'Name',
+      field: 'user_name',
+      sortable: true,
+      filter: true,
+      flex: 1,
+      minWidth: 150,
+    },
+    {
+      headerName: 'Email',
+      field: 'user_email',
+      sortable: true,
+      filter: true,
+      flex: 2,
+      minWidth: 200,
+    },
+    {
+      headerName: 'Phone',
+      field: 'user_phone',
+      sortable: true,
+      filter: true,
+      width: 150,
+      minWidth: 120,
+    },
+    {
+      headerName: 'Type',
+      field: 'user_type',
+      sortable: true,
+      filter: true,
+      width: 120,
+      minWidth: 100,
+      cellRenderer: (params: any) => {
+        return <span className="capitalize">{params.value}</span>;
+      }
+    },
+    {
+      headerName: 'Role',
+      field: 'user_role',
+      sortable: true,
+      filter: true,
+      width: 120,
+      minWidth: 100,
+      cellRenderer: (params: any) => {
+        return <span className="capitalize">{params.value}</span>;
+      }
+    },
+    {
+      headerName: 'Status',
+      field: 'status',
+      sortable: true,
+      filter: true,
+      width: 120,
+      minWidth: 100,
+      cellRenderer: (params: any) => {
+        const status = params.value || 'Active';
+        return (
+          <Badge variant={status === 'Active' ? 'default' : 'secondary'}>
+            {status}
+          </Badge>
+        );
+      }
+    },
+    {
+      headerName: 'Action',
+      field: 'action',
+      width: 100,
+      cellRenderer: (params: any) => {
+        const user = params.data;
+        return (
+          <div className="flex justify-center h-full items-center">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => navigate(`/user/${user.user_phone}`)}
+              className="h-8 w-8 p-0"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          </div>
+        );
+      },
+      sortable: false,
+      filter: false,
+      resizable: false,
+    }
+  ], [navigate]);
+
+  const defaultColDef = useMemo(() => ({
+    resizable: true,
+    sortable: true,
+    filter: true,
+  }), []);
+
+  const onGridReady = (params: any) => {
+    params.api.sizeColumnsToFit();
+  };
+
+  const handleGlobalFilter = useCallback((value: string) => {
+    setSearchText(value);
+    if (gridRef.current?.api) {
+      gridRef.current.api.setQuickFilter(value);
+    }
+  }, []);
 
   // Mobile Card Component
   const UserCard = ({ user }: { user: User }) => (
@@ -271,6 +295,8 @@ export default function Dashboard() {
     </Card>
   );
 
+  const hasData = filteredUsers.length > 0;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20">
       <div className="container mx-auto p-6 space-y-6">
@@ -288,7 +314,7 @@ export default function Dashboard() {
               <Input
                 placeholder="Search users..."
                 value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
+                onChange={(e) => handleGlobalFilter(e.target.value)}
                 className="pl-10 w-full"
               />
             </div>
@@ -318,7 +344,7 @@ export default function Dashboard() {
             </div>
           )}
 
-          {!loading && filteredUsers.length === 0 && (
+          {!loading && !hasData && (
             <Card>
               <CardContent className="flex items-center justify-center h-32">
                 <p className="text-muted-foreground">
@@ -328,7 +354,7 @@ export default function Dashboard() {
             </Card>
           )}
 
-          {!loading && filteredUsers.length > 0 && (
+          {!loading && hasData && (
             <>
               {/* Mobile View - Cards */}
               {isMobile && (
@@ -341,13 +367,7 @@ export default function Dashboard() {
 
               {/* Desktop View - AG Grid */}
               {!isMobile && (
-                <div
-                  className="ag-theme-alpine"
-                  style={{
-                    height: '600px',
-                    width: '100%',
-                  }}
-                >
+                <div className="ag-theme-alpine h-[600px] w-full rounded-lg overflow-hidden border">
                   <AgGridReact
                     ref={gridRef}
                     rowData={filteredUsers}
@@ -355,13 +375,16 @@ export default function Dashboard() {
                     defaultColDef={defaultColDef}
                     pagination={true}
                     paginationPageSize={10}
+                    suppressRowHoverHighlight={false}
                     suppressCellFocus={true}
-                    rowHeight={60}
-                    headerHeight={50}
-                    domLayout='normal'
                     animateRows={true}
                     enableCellTextSelection={true}
-                    ensureDomOrder={true}
+                    onGridReady={onGridReady}
+                    rowHeight={50}
+                    headerHeight={50}
+                    suppressColumnVirtualisation={true}
+                    rowSelection="single"
+                    suppressRowClickSelection={true}
                   />
                 </div>
               )}

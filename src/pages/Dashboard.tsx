@@ -1,8 +1,4 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { AgGridReact } from 'ag-grid-react';
-import { ColDef } from 'ag-grid-community';
-import 'ag-grid-community/styles/ag-grid.css';
-import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { userApi, User, CreateUserData } from '@/lib/api';
@@ -11,7 +7,6 @@ import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, Pencil, Trash2, Plus, Search } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
@@ -26,7 +21,6 @@ export default function Dashboard() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const isMobile = useIsMobile();
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -117,102 +111,6 @@ export default function Dashboard() {
     }
   };
 
-  const ActionsCellRenderer = (props: any) => {
-    const user = props.data;
-
-    return (
-      <div className="flex items-center gap-2 h-full">
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => navigate(`/user/${user.user_phone}`)}
-          className="h-8 w-8 p-0"
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => {
-            setSelectedUser(user);
-            setIsEditModalOpen(true);
-          }}
-          className="h-8 w-8 p-0"
-        >
-          <Pencil className="h-4 w-4" />
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => {
-            setSelectedUser(user);
-            setIsDeleteDialogOpen(true);
-          }}
-          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </div>
-    );
-  };
-
-  const columnDefs: ColDef[] = [
-    {
-      field: 'record_id',
-      headerName: 'Record ID',
-      filter: 'agTextColumnFilter',
-      flex: 1,
-      minWidth: 120,
-      maxWidth: 150
-    },
-    {
-      field: 'user_name',
-      headerName: 'Name',
-      filter: 'agTextColumnFilter',
-      flex: 1,
-      minWidth: 150
-    },
-    {
-      field: 'user_email',
-      headerName: 'Email',
-      filter: 'agTextColumnFilter',
-      flex: 1,
-      minWidth: 200
-    },
-    {
-      field: 'user_phone',
-      headerName: 'Phone',
-      filter: 'agTextColumnFilter',
-      flex: 1,
-      minWidth: 130
-    },
-    {
-      field: 'user_type',
-      headerName: 'Type',
-      filter: 'agSetColumnFilter',
-      flex: 1,
-      minWidth: 120,
-      valueFormatter: (params) => params.value ? params.value.charAt(0).toUpperCase() + params.value.slice(1) : ''
-    },
-    {
-      field: 'user_role',
-      headerName: 'Role',
-      filter: 'agSetColumnFilter',
-      flex: 1,
-      minWidth: 120,
-      valueFormatter: (params) => params.value ? params.value.charAt(0).toUpperCase() + params.value.slice(1) : ''
-    },
-    {
-      headerName: 'Actions',
-      cellRenderer: ActionsCellRenderer,
-      flex: 1,
-      minWidth: 150,
-      maxWidth: 200,
-      sortable: false,
-      filter: false,
-      pinned: 'right',
-    },
-  ];
 
   const filteredUsers = useMemo(() => {
     if (!searchText) return users;
@@ -224,7 +122,7 @@ export default function Dashboard() {
       user.user_phone?.toLowerCase().includes(searchLower) ||
       user.user_type?.toLowerCase().includes(searchLower) ||
       user.user_role?.toLowerCase().includes(searchLower) ||
-      user.record_id?.toString().includes(searchLower)
+      user.id?.toString().includes(searchLower)
     );
   }, [users, searchText]);
 
@@ -251,8 +149,8 @@ export default function Dashboard() {
           <span className="font-medium capitalize">{user.user_type}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Record ID:</span>
-          <span className="font-medium font-mono text-xs">{user.record_id}</span>
+          <span className="text-muted-foreground">User ID:</span>
+          <span className="font-medium font-mono text-xs">{user.id}</span>
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <Button
@@ -317,65 +215,28 @@ export default function Dashboard() {
             </Button>
           </div>
 
-          {isMobile ? (
-            <div className="space-y-4">
-              {loading && (
-                <div className="text-center p-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                  <p className="text-muted-foreground mt-2">Loading users...</p>
-                </div>
-              )}
-
-              {!loading && filteredUsers.length === 0 && (
-                <Card>
-                  <CardContent className="flex items-center justify-center h-32">
-                    <p className="text-muted-foreground">
-                      {users.length === 0 ? 'No users found' : 'No users match your search'}
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {!loading && filteredUsers.map((user) => (
-                <UserCard key={user.record_id} user={user} />
-              ))}
+          {loading && (
+            <div className="text-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="text-muted-foreground mt-2">Loading users...</p>
             </div>
-          ) : (
-            <div className="ag-theme-alpine" style={{ height: '600px', width: '100%' }}>
-              {loading && (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-                    <p className="text-muted-foreground mt-2">Loading users...</p>
-                  </div>
-                </div>
-              )}
+          )}
 
-              {!loading && filteredUsers.length === 0 && (
-                <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <p className="text-muted-foreground">
-                      {users.length === 0 ? 'No users found' : 'No users match your search'}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">Total users in state: {users.length}</p>
-                  </div>
-                </div>
-              )}
+          {!loading && filteredUsers.length === 0 && (
+            <Card>
+              <CardContent className="flex items-center justify-center h-32">
+                <p className="text-muted-foreground">
+                  {users.length === 0 ? 'No users found' : 'No users match your search'}
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
-              {!loading && filteredUsers.length > 0 && (
-                <AgGridReact
-                  rowData={filteredUsers}
-                  columnDefs={columnDefs}
-                  defaultColDef={{
-                    sortable: true,
-                    resizable: true,
-                    filter: true,
-                  }}
-                  pagination={true}
-                  paginationPageSize={20}
-                  suppressNoRowsOverlay={true}
-                />
-              )}
+          {!loading && filteredUsers.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredUsers.map((user) => (
+                <UserCard key={user.id} user={user} />
+              ))}
             </div>
           )}
         </div>

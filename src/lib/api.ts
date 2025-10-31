@@ -13,7 +13,6 @@ const api = axios.create({
 
 export interface User {
   id: number;
-  record_id: string;
   user_name: string;
   user_phone: string;
   user_email: string;
@@ -122,6 +121,7 @@ export const userApi = {
 
   deleteUser: async (phone: string) => {
     try {
+      console.log('Fetching user by phone for delete:', phone);
       const users = await userApi.getUserByPhone(phone);
 
       if (users.length === 0) {
@@ -129,9 +129,17 @@ export const userApi = {
       }
 
       const user = users[0];
-      const recordId = user.record_id;
+      console.log('User found:', user);
+      
+      const userId = user.id;
+      console.log('Using id for delete:', userId);
 
-      const response = await api.delete(`/user/user?record_id=${recordId}`);
+      if (!userId) {
+        throw new Error('id not found in user data');
+      }
+
+      const response = await api.delete(`/user/user?record_id=${userId}`);
+      console.log('Delete response:', response.data);
       return response.data;
     } catch (error) {
       console.error('Delete User API Error:', error);

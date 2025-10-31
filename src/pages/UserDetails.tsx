@@ -27,10 +27,8 @@ export default function UserDetails() {
         console.log('User details data:', data);
 
         // Handle array response from getUserByPhone
-        if (Array.isArray(data) && data.length > 0) {
+        if (data && data.length > 0) {
           setUser(data[0]);
-        } else if (data && typeof data === 'object') {
-          setUser(data);
         } else {
           setUser(null);
         }
@@ -61,10 +59,8 @@ export default function UserDetails() {
 
       // Refresh user data
       const updatedData = await userApi.getUserByPhone(user.user_phone);
-      if (Array.isArray(updatedData) && updatedData.length > 0) {
+      if (updatedData && updatedData.length > 0) {
         setUser(updatedData[0]);
-      } else if (updatedData && typeof updatedData === 'object') {
-        setUser(updatedData);
       }
       setIsEditModalOpen(false);
     } catch (error) {
@@ -147,7 +143,7 @@ export default function UserDetails() {
             <div className="flex justify-between items-start">
               <div>
                 <CardTitle className="text-3xl text-gradient">{user.user_name}</CardTitle>
-                <CardDescription>Record ID: {user.record_id}</CardDescription>
+                <CardDescription>User ID: {user.id}</CardDescription>
               </div>
               <div className="flex gap-2">
                 <Badge variant="secondary" className="capitalize">
@@ -199,8 +195,8 @@ export default function UserDetails() {
                 <div className="flex items-start gap-3 p-4 rounded-lg bg-secondary/50">
                   <Shield className="h-5 w-5 mt-0.5 text-primary" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-muted-foreground">Record ID</p>
-                    <p className="text-base font-semibold font-mono">{user.record_id}</p>
+                    <p className="text-sm font-medium text-muted-foreground">User ID</p>
+                    <p className="text-base font-semibold font-mono">{user.id}</p>
                   </div>
                 </div>
 

@@ -6,8 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { userApi, User } from '@/lib/api';
 import { UserModal } from '@/components/UserModal';
 import { DeleteConfirmDialog } from '@/components/DeleteConfirmDialog';
+import { ChangePasswordModal } from '@/components/ChangePasswordModal';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Pencil, Trash2, Calendar, Phone, Mail, User as UserIcon, Shield } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, Calendar, Phone, Mail, User as UserIcon, Shield, KeyRound } from 'lucide-react';
 
 export default function UserDetails() {
   const { phone } = useParams<{ phone: string }>();
@@ -15,6 +16,7 @@ export default function UserDetails() {
   const [loading, setLoading] = useState(true);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -134,6 +136,14 @@ export default function UserDetails() {
             </div>
           </div>
           <div className="flex gap-2">
+            <Button
+              onClick={() => setIsChangePasswordModalOpen(true)}
+              variant="secondary"
+              className="gap-2"
+            >
+              <KeyRound className="h-4 w-4" />
+              Change Password
+            </Button>
             <Button
               onClick={() => setIsEditModalOpen(true)}
               variant="outline"
@@ -284,6 +294,13 @@ export default function UserDetails() {
         onConfirm={handleDeleteUser}
         userName={user.user_name}
         isLoading={false}
+      />
+
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={isChangePasswordModalOpen}
+        onClose={() => setIsChangePasswordModalOpen(false)}
+        userPhone={user.user_phone}
       />
     </div>
   );
